@@ -1,0 +1,8 @@
+_build/
+deps/
+.git/
+.gitignore
+priv/static/uploads/
+doc/
+cover/
+*.md
