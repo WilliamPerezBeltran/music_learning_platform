@@ -6,13 +6,17 @@ Target users: children and beginners with zero music theory.
 Core value: colored notation + progressive levels per song.
 
 ## Tech Stack
-- Backend: Phoenix + Elixir
-- Frontend: Phoenix LiveView
+- Language: Elixir 1.19.5
+- Framework: Phoenix 1.8.5
+- UI / Realtime: Phoenix LiveView 1.1
 - Audio engine: Tone.js (JavaScript)
 - Score renderer: OpenSheetMusicDisplay (OSMD)
 - Music format: MusicXML (primary), MIDI (future)
-- Database: PostgreSQL
-- CSS: Tailwind CSS
+- Database: PostgreSQL 16.14
+- CSS: Tailwind v4 + DaisyUI
+- Icons: Heroicons v2.2
+- Image storage: Cloudflare R2
+- HTTP server: Bandit
 
 ## Architecture — Mental Model
 ```
