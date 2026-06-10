@@ -1,0 +1,3 @@
+ tree -a -I ".git" --noreport | while read -r line; do   echo "$line";    path=$(echo "$line" | sed 's/[│├└─ ]//g' | sed 's/^\.//');    if [ -f "$path" ]; then     echo "      contenido";     sed 's/^/      /' "$path";   fi; done
+
+
