@@ -1,0 +1,2132 @@
+===== TREE =====
+.
+├── CLAUDE.md
+├── CONTEXT.md
+├── docs
+│   ├── business
+│   │   ├── 01-MVP_Plataforma_Aprendizaje_Musical_Por_Colores.md
+│   │   ├── 02-MVP_Core.md
+│   │   ├── 03-MVP_Additional_Considerations.md
+│   │   ├── 04-Roadmap_MVP_Music_Learning_Platform.md
+│   │   └── 05-Technical_Roadmap_Phase_0.md
+│   └── technical
+│       └── phase_0
+│           ├── 00_Roadmap.md
+│           ├── 01_Core
+│           │   ├── architecture_mapping_and_system_flow_phoenix.md
+│           │   ├── architecture.md
+│           │   ├── database design.md
+│           │   ├── data_Model_explination.md
+│           │   ├── data_Model.md
+│           │   └── entities.md
+│           ├── 02_Rendering
+│           │   ├── 03_MusicXML_Integration.md
+│           │   └── 04_OpenSheetMusicDisplay.md
+│           ├── 03_Audio
+│           │   ├── 05_Audio_Playback.md
+│           │   └── 06_ToneJS_Integration.md
+│           ├── 04_Sync
+│           │   ├── 07_Color_Mapping_System.md
+│           │   └── 08_Synchronization_Strategy.md
+│           ├── 05_System
+│           │   ├── 09_File_Storage.md
+│           │   └── 10_JS_Hooks_Architecture.md
+│           └── 06_Testing
+│               └── 11_Test_Songs.md
+├── project_dump.txt
+├── README.md
+└── TOKEN_OPTIMIZATION.MD
+
+11 directories, 26 files
+
+
+===== FILE CONTENTS =====
+
+
+===== ./CONTEXT.md =====
+
+# CONTEXT.md — Music Learning Platform
+
+## Vision
+Educational platform for learning piano through a color-based visual system.
+Children and beginners can play songs quickly without prior music knowledge.
+
+Core combination:
+- Colored sheet music
+- Interactive playback
+- Progressive levels per song
+- Guided tutorials
+- Freemium model
+
+## Business Model
+- Free: first songs, first levels, basic features
+- Premium: full library, all levels, weekly new songs, progress tracking, PDF export
+
+## MVP Validation Hypothesis
+A user with zero music knowledge can:
+1. Choose a song
+2. Follow the color-coded score
+3. Listen to the playback
+4. Learn a basic melody
+5. Progress through levels faster than with traditional notation
+
+## Phase Roadmap (high level)
+- Phase 0: Technical validation — prove the stack works
+- Phase 1: MVP Core — library, colored score, playback, visual config
+- Phase 2: Level system — 5 difficulty levels per song
+- Phase 3: Content admin — add songs without code changes
+- Phase 4: Initial catalog — 20–50 songs, beta launch
+- Phase 5: Landing page — acquisition
+- Phase 6: User accounts — persist progress
+- Phase 7: Progress tracking — metrics per song/level
+- Phase 8: Monetization — first paying users
+- Phase 9: Social media content — organic acquisition funnel
+- Phase 10: Advanced features — virtual piano, MIDI input, evaluation
+- Phase 11: AI — audio→MusicXML, auto level generation (only after market validation)
+
+## Level System (per song)
+```
+Level 1 — Main melody only
+Level 2 — Simplified melody
+Level 3 — Melody + basic chords
+Level 4 — Simplified left hand
+Level 5 — Full song
+```
+
+## Initial Song Catalog (Phase 0 test songs)
+- Bartolito (primary demo)
+- Estrellita
+- Feliz Cumpleaños
+- Los Pollitos
+- Himno de la Alegría
+
+Each song needs: MusicXML file, lyrics, note colors, available levels.
+
+## Visual Configuration (user-controlled toggles)
+- Colors on/off
+- Note names (Do, Re, Mi...) on/off
+- Chords on/off
+- Left hand on/off
+- Right hand on/off
+- Lyrics on/off
+
+## Data Model
+See `docs/technical/phase_0/01_Core/entities.md` for full field definitions.
+
+Relationships:
+```
+Song
+ └── SongVersion (1→N)   — one version per difficulty level
+      └── MusicTimeline (1→1)  — processed temporal data
+           └── MusicalEvent (1→N)  — individual note/rest events
+
+Song
+ └── ContentAsset (1→N)  — MusicXML, audio, image, MIDI files
+
+PlaybackSession — tracks current runtime state per session
+User (future) → UserProgress (future)
+```
+
+## Architecture Layers
+See `docs/technical/phase_0/01_Core/architecture.md` for full diagram.
+
+```
+[ USER BROWSER ]
+  Phoenix LiveView (UI)
+       ↕ JS Bridge (hooks)
+  OSMD (score SVG)   Tone.js (audio)
+       ↕ LiveView events
+[ BACKEND ]
+  State Model → Sync Engine → Event Timeline → Workers
+```
+
+Full code structure mapped in:
+`docs/technical/phase_0/01_Core/architecture_mapping_and_system_flow_phoenix.md`
+
+## MusicXML File Storage
+Decision pending. Options evaluated:
+- `priv/static/` — simplest for Phase 0
+- S3 / Cloudflare R2 — for production scale
+- Git repository — for versioning during development
+
+Recommended for Phase 0: `priv/static/songs/`
+
+## Color Mapping System
+One color per musical note (Do→Re→Mi... mapped to distinct colors).
+Color applied to: note head in SVG, note name label, highlight overlay during playback.
+Mapping defined in `color_mapper.ex` (Visual layer).
+
+## Synchronization Strategy
+Highest technical risk of Phase 0.
+
+The sync problem: MusicXML defines notes structurally, Tone.js plays in real time,
+OSMD renders statically. The three must stay aligned during playback.
+
+Solution architecture:
+- MusicXML is parsed once into an Event Timeline (list of timed events)
+- Tone.js Transport fires callbacks at each event's start_time
+- Each callback triggers: audio note play + OSMD highlight update
+- Seeking/pause handled by resetting Transport position against the timeline
+
+All sync goes through the Sync Engine — OSMD and Tone.js never communicate directly.
+
+## JS Hooks Architecture
+LiveView cannot call JavaScript directly. The bridge:
+```
+LiveView
+  ↓ pushEvent / handle_event
+JS Hook (osmd_hook.js | tone_player_hook.js | sync_hook.js)
+  ↓
+OSMD / Tone.js
+```
+
+Hooks are mounted on DOM elements via `phx-hook` attribute.
+They receive events from LiveView and translate them to JS engine calls.
+
+## Current Status (Phase 0)
+- Documentation: business layer complete, architecture complete, implementation docs mostly empty stubs
+- Code: no Phoenix project created yet
+- Next step: 0.1 — create Phoenix project
+
+===== ./docs/business/01-MVP_Plataforma_Aprendizaje_Musical_Por_Colores.md =====
+
+# Propuesta MVP – Plataforma de Aprendizaje Musical por Colores
+
+## Visión
+
+Crear una plataforma educativa para aprender piano mediante un sistema visual basado en colores, permitiendo que niños y principiantes puedan tocar canciones rápidamente sin necesidad de conocimientos musicales previos.
+
+La idea es combinar:
+
+* Partituras coloreadas.
+* Reproducción interactiva.
+* Tutoriales guiados.
+* Niveles progresivos.
+* Contenido gratuito inicial y modelo de suscripción para contenido avanzado.
+
+---
+
+# Referencias Analizadas
+
+## Aplicaciones similares
+
+* https://www.color-coded.app/
+* https://klang.io/piano2notes/
+* https://www.coloredmusicsheet.com/
+* https://playxylo.com/songs?colors=chromanotes
+
+## Conceptos que funcionan bien
+
+* Notas identificadas por colores.
+* Nombre de las notas visible.
+* Reproducción automática.
+* Aprendizaje progresivo.
+* Interfaz simple para niños.
+* Canciones populares e infantiles.
+
+---
+
+# MVP Inicial
+
+## Funcionalidades básicas
+
+### Partitura interactiva
+
+* Pentagrama tradicional.
+* Notas coloreadas.
+* Nombre de la nota debajo.
+* Letra de la canción.
+* Reproducción automática.
+* Control de velocidad.
+* Indicador visual de la nota actual.
+
+### Opciones de visualización
+
+El usuario podrá activar o desactivar:
+
+* Colores.
+* Nombre de las notas.
+* Mano izquierda.
+* Mano derecha.
+* Acordes.
+* Letra.
+* Numeración de dedos (futuro).
+
+---
+
+# Sistema de Niveles
+
+Cada canción tendrá múltiples versiones.
+
+## Nivel 1
+
+Solo melodía principal.
+
+Ejemplo:
+
+```text
+Do Re Mi Fa Sol
+```
+
+## Nivel 2
+
+Melodía + notas simples de acompañamiento.
+
+## Nivel 3
+
+Melodía + acordes básicos.
+
+## Nivel 4
+
+Mano izquierda simplificada.
+
+## Nivel 5
+
+Canción completa.
+
+## Niveles Avanzados
+
+Hasta llegar a una interpretación completa y realista de la pieza.
+
+Ejemplo:
+
+```text
+Nivel 1 → Solo melodía
+Nivel 2 → Melodía + bajos
+Nivel 3 → Melodía + acordes
+Nivel 4 → Dos manos simplificadas
+Nivel 5 → Canción completa
+```
+
+---
+
+# Modelo de Negocio
+
+## Freemium
+
+### Gratis
+
+* Primeras canciones.
+* Primeros niveles.
+* Funciones básicas.
+
+### Premium
+
+* Biblioteca completa.
+* Todos los niveles.
+* Canciones nuevas cada semana.
+* Seguimiento de progreso.
+* Tutoriales exclusivos.
+* Descarga de partituras PDF.
+
+---
+
+# Estrategia de Crecimiento
+
+## Contenido para redes sociales
+
+Crear videos cortos mostrando:
+
+* Cómo tocar canciones famosas.
+* Cómo aprender con colores.
+* Antes y después del estudiante.
+* Tutoriales rápidos.
+
+Objetivo:
+
+```text
+Video
+↓
+Usuario visita web
+↓
+Prueba canciones gratis
+↓
+Descarga aplicación
+↓
+Suscripción Premium
+```
+
+---
+
+# Arquitectura Técnica Recomendada
+
+## Backend
+
+Phoenix + Elixir
+
+## Frontend
+
+Phoenix LiveView
+
+## Audio
+
+Tone.js
+
+## Renderizado de partituras
+
+OpenSheetMusicDisplay
+
+## Formatos musicales
+
+* MusicXML
+* MIDI
+
+## IA futura
+
+Microservicio Python independiente para:
+
+* Generación automática de niveles.
+* Conversión de audio a partituras.
+* Recomendaciones personalizadas.
+
+---
+
+# Ventajas de este enfoque
+
+* Una sola aplicación web.
+* Funciona en computador.
+* Funciona en tablet.
+* Funciona en móvil.
+* Menor complejidad inicial que Flutter + múltiples plataformas.
+* Excelente rendimiento para contenido musical.
+* Permite lanzar rápidamente un MVP.
+
+---
+
+# Diferenciador Principal
+
+El valor no está únicamente en mostrar partituras coloreadas.
+
+El verdadero producto es:
+
+```text
+Canción
+↓
+Nivel 1 (solo melodía)
+↓
+Nivel 2 (melodía + bajos)
+↓
+Nivel 3 (acordes básicos)
+↓
+Nivel 4 (dos manos simplificadas)
+↓
+Nivel 5 (canción completa)
+↓
+Tutorial en video
+↓
+Seguimiento de progreso
+```
+
+La combinación de:
+
+* Partituras por colores.
+* Aprendizaje progresivo.
+* Videos guiados.
+* Biblioteca de canciones.
+
+
+
+===== ./docs/business/02-MVP_Core.md =====
+
+mvp Basic Core 
+
+# MVP Core
+
+Para validar la idea, el core del MVP sería extremadamente pequeño:
+
+## Core 1: Mostrar una canción
+
+* Cargar una partitura MusicXML.
+* Mostrar notas con colores.
+* Mostrar nombres (Do, Re, Mi).
+* Mostrar letra.
+
+## Core 2: Reproducir la canción
+
+* Botón Play.
+* Botón Pause.
+* Control de velocidad.
+* Resaltar la nota actual mientras suena.
+
+## Core 3: Sistema de niveles
+
+Para una misma canción:
+
+```text
+Bartolito
+├── Nivel 1 (melodía)
+├── Nivel 2 (melodía simplificada)
+├── Nivel 3 (acordes básicos)
+└── Nivel 4 (completa)
+```
+
+## Core 4: Configuración visual
+
+Activar/desactivar:
+
+* Colores
+* Nombre de notas
+* Acordes
+* Mano izquierda
+* Mano derecha
+
+## Lo que NO haría en el MVP
+
+* Login social.
+* IA.
+* Piano2Notes.
+* Generación automática de partituras.
+* Comunidad.
+* Gamificación avanzada.
+* Aplicación móvil nativa.
+* Seguimiento detallado de progreso.
+
+## Si tuviera que resumir el MVP en una sola frase:
+
+> "Tomar una canción, dividirla en niveles, mostrarla con colores y reproducirla de forma interactiva."
+
+Ese es el núcleo que valida si los niños y principiantes realmente aprenden más rápido con el método de colores. Si eso funciona, todo lo demás se construye encima.
+
+
+
+
+==========================================
+==========================================
+
+# MVP Core
+
+## Objetivo
+
+Validar que niños y principiantes pueden aprender canciones más rápido utilizando partituras coloreadas y niveles progresivos.
+
+---
+
+# Core del MVP
+
+## 1. Mostrar una Canción
+
+Permitir visualizar una canción desde una partitura MusicXML.
+
+Características:
+
+* Notas coloreadas.
+* Nombre de las notas (Do, Re, Mi, Fa, Sol, La, Si).
+* Letra de la canción.
+* Diseño responsive para computador, tablet y móvil.
+
+---
+
+## 2. Reproducción Interactiva
+
+Permitir escuchar la canción mientras se sigue visualmente la partitura.
+
+Características:
+
+* Play.
+* Pause.
+* Stop.
+* Control de velocidad.
+* Resaltado de la nota actual.
+
+---
+
+## 3. Sistema de Niveles
+
+Cada canción tendrá varias versiones de dificultad.
+
+Ejemplo:
+
+### Bartolito
+
+* Nivel 1: Solo melodía.
+* Nivel 2: Melodía simplificada.
+* Nivel 3: Melodía + acordes básicos.
+* Nivel 4: Mano izquierda simplificada.
+* Nivel 5: Canción completa.
+
+Objetivo:
+
+Permitir que el estudiante avance progresivamente hasta interpretar la canción completa.
+
+---
+
+## 4. Configuración Visual
+
+El usuario podrá activar o desactivar:
+
+* Colores.
+* Nombre de notas.
+* Acordes.
+* Mano izquierda.
+* Mano derecha.
+* Letra.
+
+---
+
+# Contenido Inicial
+
+Lanzar con un conjunto reducido de canciones.
+
+Ejemplos:
+
+* Bartolito.
+* Estrellita.
+* Feliz Cumpleaños.
+* Los Pollitos.
+* Himno de la Alegría.
+
+Cada una con múltiples niveles.
+
+---
+
+# Fuera del MVP
+
+No desarrollar inicialmente:
+
+* Inteligencia Artificial.
+* Piano2Notes.
+* Generación automática de partituras.
+* Aplicaciones móviles nativas.
+* Comunidad.
+* Sistema de logros.
+* Gamificación avanzada.
+* Marketplace de canciones.
+
+---
+
+# Métrica Principal
+
+Validar que un usuario pueda:
+
+1. Elegir una canción.
+2. Seleccionar un nivel.
+3. Seguir la partitura coloreada.
+4. Reproducir la canción.
+5. Aprender la melodía más rápido que con una partitura tradicional.
+
+Si esta hipótesis se valida, se podrá construir el resto de la plataforma sobre esta base.
+
+===== ./docs/business/04-Roadmap_MVP_Music_Learning_Platform.md =====
+
+# Roadmap MVP Music Learning Platform
+
+## Fase 0 — Validación Técnica
+
+### Objetivo
+
+Validar que el stack tecnológico puede soportar el producto.
+
+### Entregables
+
+* Proyecto Phoenix + LiveView inicial.
+* Integración OpenSheetMusicDisplay.
+* Integración Tone.js.
+* Renderizar un archivo MusicXML.
+* Reproducir una canción simple.
+* Resaltar notas durante la reproducción.
+
+### Resultado esperado
+
+Demostración funcional con una única canción.
+
+---
+
+# Fase 1 — MVP Core
+
+### Objetivo
+
+Construir el núcleo mínimo del producto.
+
+### Funcionalidades
+
+#### Biblioteca
+
+* Listado de canciones.
+* Vista de detalle.
+
+#### Partitura
+
+* Renderizado MusicXML.
+* Notas coloreadas.
+* Nombre de notas.
+* Letra.
+
+#### Reproducción
+
+* Play.
+* Pause.
+* Stop.
+* Velocidad de reproducción.
+
+#### Configuración
+
+* Mostrar/Ocultar colores.
+* Mostrar/Ocultar nombres.
+* Mostrar/Ocultar acordes.
+
+### Resultado esperado
+
+Usuario puede seleccionar y reproducir canciones.
+
+---
+
+# Fase 2 — Sistema de Niveles
+
+### Objetivo
+
+Crear progresión educativa.
+
+### Funcionalidades
+
+Cada canción tendrá:
+
+```text
+Nivel 1 - Melodía
+Nivel 2 - Melodía simplificada
+Nivel 3 - Acordes básicos
+Nivel 4 - Dos manos simplificadas
+Nivel 5 - Canción completa
+```
+
+### Administración
+
+* Asociar múltiples niveles a una canción.
+* Ordenar niveles.
+* Publicar/despublicar niveles.
+
+### Resultado esperado
+
+Usuario avanza progresivamente dentro de una misma canción.
+
+---
+
+# Fase 3 — Administración de Contenido
+
+### Objetivo
+
+Permitir crecimiento del catálogo.
+
+### Funcionalidades
+
+#### Gestión de canciones
+
+* Crear canción.
+* Editar canción.
+* Eliminar canción.
+
+#### Archivos
+
+* Subir MusicXML.
+* Subir imagen.
+* Subir audio.
+
+#### Metadatos
+
+* Título.
+* Categoría.
+* Dificultad.
+* Duración.
+
+### Resultado esperado
+
+El equipo puede agregar contenido sin modificar código.
+
+---
+
+# Fase 4 — Catálogo Inicial
+
+### Objetivo
+
+Lanzamiento beta.
+
+### Meta
+
+Publicar entre 20 y 50 canciones.
+
+### Categorías
+
+* Infantiles.
+* Clásicas.
+* Populares.
+* Navidad.
+
+### Resultado esperado
+
+Catálogo suficiente para pruebas reales.
+
+---
+
+# Fase 5 — Landing Page
+
+### Objetivo
+
+Captación de usuarios.
+
+### Funcionalidades
+
+* Home.
+* Cómo funciona.
+* Canciones destacadas.
+* Demo gratuita.
+* Registro de interés.
+
+### Resultado esperado
+
+Primeras métricas de adquisición.
+
+---
+
+# Fase 6 — Cuentas de Usuario
+
+### Objetivo
+
+Persistir progreso.
+
+### Funcionalidades
+
+* Registro.
+* Login.
+* Recuperación de contraseña.
+
+### Perfil
+
+* Canciones vistas.
+* Niveles completados.
+* Última actividad.
+
+### Resultado esperado
+
+Retención de usuarios.
+
+---
+
+# Fase 7 — Seguimiento de Progreso
+
+### Objetivo
+
+Medir aprendizaje.
+
+### Funcionalidades
+
+* Progreso por canción.
+* Progreso por nivel.
+* Historial de práctica.
+
+### Métricas
+
+* Tiempo de estudio.
+* Canciones completadas.
+* Niveles completados.
+
+### Resultado esperado
+
+Mayor retención.
+
+---
+
+# Fase 8 — Monetización
+
+### Objetivo
+
+Validar ingresos.
+
+### Modelo Freemium
+
+#### Gratis
+
+* Primeras canciones.
+* Primeros niveles.
+
+#### Premium
+
+* Biblioteca completa.
+* Todos los niveles.
+* Nuevo contenido.
+
+### Resultado esperado
+
+Primeros clientes de pago.
+
+---
+
+# Fase 9 — Contenido para Redes Sociales
+
+### Objetivo
+
+Adquisición orgánica.
+
+### Producción
+
+Para cada canción:
+
+* Video corto.
+* Tutorial.
+* Demo de colores.
+* Demo de niveles.
+
+### Funnel
+
+```text
+TikTok
+↓
+Instagram
+↓
+YouTube Shorts
+↓
+Landing
+↓
+Registro
+↓
+Suscripción
+```
+
+### Resultado esperado
+
+Canal de adquisición escalable.
+
+---
+
+# Fase 10 — Funcionalidades Avanzadas
+
+### Opcionales
+
+* Piano virtual.
+* Entrada MIDI.
+* Detección de errores.
+* Evaluación automática.
+* Modo práctica.
+
+### Resultado esperado
+
+Mayor diferenciación frente a competidores.
+
+---
+
+# Fase 11 — IA
+
+### Solo después de validar mercado
+
+### Posibilidades
+
+* Conversión audio → MusicXML.
+* Generación automática de niveles.
+* Sugerencias de práctica.
+* Adaptación de dificultad.
+
+### Resultado esperado
+
+Escalabilidad del contenido.
+
+---
+
+# Hito de Validación
+
+El producto se considera validado cuando:
+
+* Existen usuarios activos recurrentes.
+* Los usuarios completan canciones.
+* Existen usuarios que pagan.
+* El contenido genera tráfico orgánico.
+* El sistema de colores demuestra acelerar el aprendizaje.
+
+Hasta alcanzar este punto no se debe invertir tiempo significativo en IA, aplicaciones nativas o funcionalidades complejas.
+
+===== ./docs/business/05-Technical_Roadmap_Phase_0.md =====
+
+Fase 0.1
+- Crear proyecto Phoenix
+- Configurar Tailwind
+- Crear página de prueba
+
+Fase 0.2
+- Integrar OpenSheetMusicDisplay
+- Mostrar un MusicXML estático
+
+Fase 0.3
+- Cargar MusicXML desde archivos
+- Cambiar entre canciones
+
+Fase 0.4
+- Integrar Tone.js
+- Reproducir notas
+
+Fase 0.5
+- Sincronizar partitura + audio
+
+Fase 0.6
+- Resaltar nota actual
+
+Fase 0.7
+- Play/Pause/Stop
+
+Fase 0.8
+- Control de velocidad
+
+Fase 0.9
+- Colores por nota
+
+Fase 0.10
+- Demo funcional de Bartolito
+===== ./docs/business/03-MVP_Additional_Considerations.md =====
+
+# MVP Core - Consideraciones Adicionales
+
+## Contenido
+
+### Canciones Iniciales
+
+Definir entre 5 y 10 canciones para el lanzamiento.
+
+Ejemplos:
+
+* Bartolito
+* Estrellita
+* Feliz Cumpleaños
+* Los Pollitos
+* Himno de la Alegría
+
+---
+
+## Biblioteca de Canciones
+
+Pantalla principal con:
+
+* Lista de canciones.
+* Búsqueda simple.
+* Acceso a los niveles de cada canción.
+
+---
+
+## Formato de Datos
+
+Cada canción debe almacenar:
+
+* MusicXML
+* Letra
+* Colores de las notas
+* Niveles disponibles
+* Audio MIDI o reproducción generada
+
+---
+
+## Experiencia de Usuario
+
+Flujo mínimo:
+
+```text
+Inicio
+↓
+Seleccionar canción
+↓
+Seleccionar nivel
+↓
+Visualizar partitura
+↓
+Reproducir
+↓
+Practicar
+```
+
+---
+
+## Compatibilidad
+
+Debe funcionar correctamente en:
+
+* Computador
+* Tablet
+* Móvil
+
+Sin necesidad de instalar aplicaciones.
+
+---
+
+## Administración
+
+Panel simple para:
+
+* Crear canciones
+* Editar canciones
+* Subir MusicXML
+* Configurar colores
+* Configurar niveles
+
+---
+
+## Métrica de Validación
+
+El MVP debe responder:
+
+* ¿Los usuarios entienden el sistema de colores?
+* ¿Pueden tocar canciones simples?
+* ¿Utilizan varios niveles?
+* ¿Regresan a practicar más canciones?
+
+---
+
+## Riesgos Técnicos
+
+Validar tempranamente:
+
+* Renderizado correcto de MusicXML.
+* Sincronización audio-partitura.
+* Resaltado de notas durante reproducción.
+* Rendimiento en móviles.
+
+---
+
+## Objetivo Final del MVP
+
+Validar que una persona sin conocimientos musicales pueda:
+
+1. Elegir una canción.
+2. Seguir los colores.
+3. Escuchar la reproducción.
+4. Aprender una melodía básica.
+5. Avanzar progresivamente entre niveles.
+
+```
+```
+
+===== ./docs/technical/phase_0/05_System/10_JS_Hooks_Architecture.md =====
+
+09_JS_Hooks_Architecture.md
+
+Porque OpenSheetMusicDisplay y Tone.js vivirán en JavaScript mientras Phoenix vive en Elixir.
+
+Definir:
+
+LiveView
+↓
+Hook
+↓
+OSMD
+↓
+Tone.js
+===== ./docs/technical/phase_0/05_System/09_File_Storage.md =====
+
+Definir desde el inicio:
+
+¿Dónde viven los MusicXML?
+
+priv/static/
+S3
+R2
+Uploads
+Git repository
+===== ./docs/technical/phase_0/06_Testing/11_Test_Songs.md =====
+
+10_Test_Songs.md
+
+Necesitas canciones de prueba.
+
+Bartolito
+Estrellita
+Feliz Cumpleaños
+
+Y versiones:
+
+MusicXML
+MIDI
+PDF
+===== ./docs/technical/phase_0/03_Audio/05_Audio_Playback.md =====
+
+
+===== ./docs/technical/phase_0/03_Audio/06_ToneJS_Integration.md =====
+
+
+===== ./docs/technical/phase_0/04_Sync/08_Synchronization_Strategy.md =====
+
+Lo más importante que suele escaparse
+
+Sincronización partitura ↔ audio.
+
+Ese es el mayor riesgo técnico del proyecto.
+
+Si yo agregara un solo documento adicional sería:
+
+08_Synchronization_Strategy.md
+
+Porque si no logras sincronizar correctamente:
+
+MusicXML
+Partitura visual
+Audio Tone.js
+
+el producto completo se vuelve inviable.
+
+Para mí, el riesgo #1 de la Fase 0 no es Phoenix ni OSMD, es la sincronización.
+===== ./docs/technical/phase_0/04_Sync/07_Color_Mapping_System.md =====
+
+
+===== ./docs/technical/phase_0/02_Rendering/03_MusicXML_Integration.md =====
+
+
+===== ./docs/technical/phase_0/02_Rendering/04_OpenSheetMusicDisplay.md =====
+
+
+===== ./docs/technical/phase_0/00_Roadmap.md =====
+
+
+# Roadmap MVP Music Learning Platform
+
+Definir exactamente qué significa terminar la Fase 0.
+
+## Fase 0 — Validación Técnica
+
+### Objetivo
+
+Validar que el stack tecnológico puede soportar el producto.
+
+### Entregables
+
+* Proyecto Phoenix + LiveView inicial.
+* Integración OpenSheetMusicDisplay.
+* Integración Tone.js.
+* Renderizar un archivo MusicXML.
+* Reproducir una canción simple.
+* Resaltar notas durante la reproducción.
+
+### Resultado esperado
+
+Demostración funcional con una única canción.
+
+
+
+# Phase 0 — Roadmap (Music Learning MVP)
+
+## 0.1 — Base Setup
+- Crear proyecto Phoenix
+- Configurar Tailwind
+- Crear página de prueba
+
+## 0.2 — Visualización inicial
+- Integrar OpenSheetMusicDisplay
+- Mostrar MusicXML estático
+
+## 0.3 — Data layer
+- Cargar MusicXML desde archivos
+- Cambiar entre canciones
+
+## 0.4 — Audio engine
+- Integrar Tone.js
+- Reproducir notas
+
+## 0.5 — Sync engine
+- Sincronizar partitura + audio
+
+## 0.6 — Visual feedback
+- Resaltar nota actual
+
+## 0.7 — Player controls
+- Play / Pause / Stop
+
+## 0.8 — Performance control
+- Control de velocidad
+
+## 0.9 — Color system
+- Colores por nota
+
+## 0.10 — Final demo
+- Demo funcional de "Bartolito"
+
+---
+
+# Mapping a documentación técnica
+
+- 0.2 → OpenSheetMusicDisplay
+- 0.4 → ToneJS Integration
+- 0.5 → Synchronization Strategy
+- 0.6 → Color Mapping System
+- 0.3 → MusicXML + File Storage
+===== ./docs/technical/phase_0/01_Core/entities.md =====
+
+# Music Learning Platform — Entities (Core Data Model)
+
+---
+
+# 1. Song
+
+Representa una canción dentro del sistema.
+
+## Propósito
+Entidad base del sistema musical.
+
+## Campos
+
+- id
+- title
+- artist (opcional)
+- category
+- description (opcional)
+- duration_seconds
+- thumbnail_url (opcional)
+- is_published (boolean)
+- metadata (jsonb opcional)
+- inserted_at
+- updated_at
+
+## Relaciones
+
+- Song 1 → N SongVersion
+- Song 1 → N ContentAsset
+
+---
+
+# 2. SongVersion
+
+Representa una versión pedagógica o nivel de dificultad de una canción.
+
+## Propósito
+Define los niveles progresivos de aprendizaje.
+
+## Campos
+
+- id
+- song_id (FK → Song)
+- version_type (melody | simplified | chords | full | custom)
+- level_index
+- name
+- description (opcional)
+- musicxml_path
+- difficulty_score (0–100)
+- hand_config (jsonb)
+- visibility_config (jsonb)
+- is_active (boolean)
+- inserted_at
+- updated_at
+
+## Relaciones
+
+- SongVersion 1 → 1 MusicTimeline
+
+---
+
+# 3. MusicTimeline
+
+Representa la estructura temporal procesada de una canción.
+
+## Propósito
+Base para la sincronización musical en tiempo real.
+
+## Campos
+
+- id
+- song_version_id (FK → SongVersion)
+- bpm
+- total_duration
+- resolution (ticks / precision)
+- source_format (musicxml | midi | manual)
+- inserted_at
+- updated_at
+
+## Relaciones
+
+- MusicTimeline 1 → N MusicalEvent
+
+---
+
+# 4. MusicalEvent
+
+Unidad mínima de sincronización musical.
+
+## Propósito
+Representa notas y eventos en el tiempo.
+
+## Campos
+
+- id
+- music_timeline_id (FK → MusicTimeline)
+- event_type (note_on | note_off | chord | rest)
+- pitch (C4, D4, etc.)
+- start_time (float seconds)
+- end_time (float seconds)
+- duration (float seconds)
+- velocity (0–127 opcional)
+- voice (melody | left_hand | right_hand)
+- color_key (mapping visual)
+- index (orden secuencial)
+- metadata (jsonb opcional)
+
+---
+
+# 5. PlaybackSession
+
+Representa el estado de reproducción en tiempo real.
+
+## Propósito
+Mantener el estado del usuario mientras interactúa con una canción.
+
+## Campos
+
+- id
+- song_id
+- song_version_id
+- current_time (float)
+- is_playing (boolean)
+- speed (0.5x – 2.0x)
+- loop_enabled (boolean)
+- started_at
+- paused_at
+- client_id
+
+## Relaciones
+
+- PlaybackSession N → 1 Song
+- PlaybackSession N → 1 SongVersion
+
+---
+
+# 6. ContentAsset
+
+Representa archivos asociados a una canción.
+
+## Propósito
+Almacenar recursos multimedia y musicales.
+
+## Campos
+
+- id
+- song_id (FK → Song)
+- asset_type (musicxml | audio | image | midi)
+- file_path
+- version
+- checksum
+- uploaded_by
+- inserted_at
+- updated_at
+
+---
+
+# 7. User (Futuro)
+
+## Propósito
+Representa un usuario del sistema.
+
+## Campos
+
+- id
+- email
+- password_hash
+- name
+- role (student | teacher | admin)
+- preferences (jsonb)
+- inserted_at
+- updated_at
+
+---
+
+# 8. UserProgress (Futuro)
+
+## Propósito
+Seguimiento del progreso del usuario por canción y nivel.
+
+## Campos
+
+- id
+- user_id
+- song_id
+- song_version_id
+- completion_percentage
+- accuracy_score
+- total_play_time
+- last_position_time
+- completed (boolean)
+- mastery_level (0–5)
+- updated_at
+===== ./docs/technical/phase_0/01_Core/data_Model.md =====
+
+
+===== ./docs/technical/phase_0/01_Core/architecture.md =====
+
+# Arquitectura Técnica Recomendada (Mejorada)
+
+## 1. Backend (Core System)
+
+### Phoenix + Elixir
+
+Responsable de:
+
+- Orquestación del estado de la aplicación
+- Gestión de canciones, niveles y configuración
+- Coordinación de sincronización (tiempo musical lógico)
+- APIs internas para LiveView
+
+### Concepto clave:
+El backend **NO reproduce audio ni renderiza música**, solo coordina.
+
+---
+
+### Background Jobs / Workers (Capa Asíncrona)
+
+Responsable de:
+
+- Procesamiento de MusicXML
+- Generación de niveles de canciones
+- Validación y normalización de archivos musicales
+- Pre-cálculo de estructuras para el Sync Engine
+- Tareas pesadas fuera del flujo de LiveView
+
+### Concepto clave:
+Los workers son el backend diferido, no afectan la interacción en tiempo real.
+
+---
+
+### Event Timeline Layer (NÚCLEO MUSICAL)
+
+Responsable de:
+
+- Convertir MusicXML en eventos temporales
+- Representar la canción como una línea de tiempo
+- Servir como fuente de verdad del sistema musical
+- Soportar niveles de dificultad (0.1 → 0.10)
+
+### Concepto clave:
+ Todo se sincroniza contra la timeline, no contra OSMD ni Tone.js
+
+---
+
+### State Model (CONTROL GLOBAL)
+
+Responsable de:
+
+- Estado de reproducción (play/pause/stop)
+- Tiempo actual de la canción
+- Nivel activo
+- Canción activa
+- Configuración visual global
+
+### Concepto clave:
+ Es la única fuente de verdad del sistema en runtime
+
+---
+
+## 2. Frontend (UI Layer)
+
+### Phoenix LiveView
+
+Responsable de:
+
+- UI reactiva en tiempo real
+- Estado de reproducción visual
+- Interacción del usuario
+- Comunicación con JS hooks
+
+### Principio:
+LiveView es el “cerebro de UI”, no el motor musical.
+
+---
+
+## 3. JS Bridge Layer (COMUNICACIÓN)
+
+Responsable de:
+
+- Conectar LiveView ↔ JavaScript
+- Emitir eventos de reproducción
+- Sincronizar estado con Tone.js y OSMD
+- Manejar hooks del frontend
+
+### Componentes:
+
+- OSMD Hook
+- Tone.js Player Hook
+- Sync Controller Hook
+
+### Concepto clave:
+ Es el puente obligatorio entre backend y motor musical
+
+---
+
+## 4. Audio Engine
+
+### Tone.js (JavaScript)
+
+Responsable de:
+
+- Reproducción de audio en tiempo preciso
+- Scheduler musical (Transport)
+- Control de tempo (BPM / speed)
+- Timing de notas
+
+### Regla crítica:
+Tone.js es la **única fuente de audio**
+
+---
+
+## 5. Rendering Engine (Partituras)
+
+### OpenSheetMusicDisplay (OSMD)
+
+Responsable de:
+
+- Renderizar MusicXML como SVG
+- Mostrar pentagramas y notas
+- Highlight de notas activas
+
+### Integración:
+Se conecta vía JS Bridge Layer
+
+---
+
+## 6. Data Layer (Formato Musical)
+
+### Formatos soportados
+
+- MusicXML (principal)
+- MIDI (futuro)
+
+### Responsabilidades
+
+- Representar canciones
+- Definir niveles de dificultad
+- Convertir datos → Event Timeline
+
+---
+
+## 7. Sync Engine (CRÍTICO)
+
+Responsable de:
+
+- Sincronizar Timeline → Audio + Visual
+- Coordinar OSMD y Tone.js
+- Mantener consistencia temporal
+
+### Modelo mental:
+
+```text
+MusicXML → Event Timeline → Sync Engine → (Audio + Visual)
+```
+
+---
+
+┌──────────────────────────────────────────────────────────────┐
+│                        USER BROWSER                          │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │              Phoenix LiveView (UI Layer)             │    │
+│  │                                                      │    │
+│  │  - Play / Pause / Controls                           │    │
+│  │  - Visual feedback (colores, notas)                  │    │
+│  │  - Estado UI                                         │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                 │                         │                  │
+│                 │ JS Bridge Layer        │ Events            │
+│                 ▼                         ▼                  │
+│        ┌───────────────────┐   ┌────────────────────┐        │
+│        │   OSMD Renderer   │   │   Tone.js Audio    │        │
+│        │ (Partituras SVG)  │   │ (Playback Engine)  │        │
+│        └───────────────────┘   └────────────────────┘        │
+│                                                              │
+└───────────────────────────────┬──────────────────────────────┘
+                                │
+                                │ LiveView Events / State Sync
+                                ▼
+┌───────────────────────────────────────────────────────────-──┐
+│                     BACKEND (PHOENIX / ELIXIR)               │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────-┐    │
+│  │                 STATE MODEL (GLOBAL)                 │    │
+│  │                                                      │    │
+│  │  - canción activa                                    │    │
+│  │  - nivel activo                                      │    │
+│  │  - tiempo actual                                     │    │
+│  │  - estado play/pause                                 │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                              │                               │
+│                              ▼                               │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │              SYNC ENGINE (CORE MUSICAL)              │    │
+│  │                                                      │    │
+│  │  Timeline → sincroniza audio + visual                │    │
+│  │                                                      │    │
+│  │  MusicXML → Event Timeline → Sync Engine             │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                              │                               │
+│                              ▼                               │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │           EVENT TIMELINE (MUSICAL CORE)              │    │
+│  │                                                      │    │
+│  │  notas con tiempo, duración, nivel                   │    │
+│  │  fuente de verdad musical                            │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                              │                               │
+│                              ▼                               │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │     BACKGROUND WORKERS (ASYNC PROCESSING)            │    │
+│  │                                                      │    │
+│  │  - procesar MusicXML                                 │    │
+│  │  - generar niveles                                   │    │
+│  │  - normalizar datos                                  │    │
+│  └──────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────┘
+
+
+# Explicación simple del flujo
+
+## 1. Usuario interactúa
+
+- Da Play  
+- Cambia velocidad  
+- Selecciona canción  
+
+---
+
+## 2. LiveView (UI Layer)
+
+- Recibe acción  
+- Actualiza estado  
+- Envía evento a JS Bridge  
+
+---
+
+## 3. JS Bridge Layer
+
+- Conecta backend ↔ frontend  
+- Envía comandos a:  
+  - OSMD (visual)  
+  - Tone.js (audio)  
+
+---
+
+## 4. OSMD + Tone.js
+
+- OSMD → dibuja partituras  
+- Tone.js → reproduce audio  
+
+---
+
+## 5. Backend (cerebro real)
+
+### State Model
+- controla TODO el estado global  
+
+### Event Timeline
+- convierte música en eventos con tiempo real  
+
+### Sync Engine
+- asegura que audio + visual van sincronizados  
+
+---
+
+## 6. Workers (background)
+
+- preparan canciones antes de reproducirse  
+- generan niveles  
+- procesan archivos pesados  
+
+
+### IDEA CLAVE DEL SISTEMA
+```text
+MusicXML
+   ↓
+Event Timeline (verdad musical)
+   ↓
+Sync Engine (coordinador)
+   ↓
+Audio (Tone.js) + Visual (OSMD)
+```
+
+### RESUMEN ULTRA SIMPLE
+
+- LiveView = UI
+- JS Bridge = conexión
+- Tone.js = sonido
+- OSMD = visual
+- Event Timeline = música real
+- Sync Engine = cerebro del sistema
+- Workers = procesamiento en background
+- State Model = control global
+===== ./docs/technical/phase_0/01_Core/database design.md =====
+
+# Music Learning Platform — Database Diagram (ERD)
+
+---
+
+# DIAGRAMA GENERAL
+
+```txt
++------------------+
+|      songs       |
++------------------+
+| id (PK)          |
+| title            |
+| artist           |
+| category         |
+| duration         |
+| metadata         |
++------------------+
+        |
+        | 1 → N
+        v
++------------------------+
+|    song_versions       |
++------------------------+
+| id (PK)                |
+| song_id (FK)           |
+| version_type           |
+| level_index            |
+| musicxml_path         |
+| difficulty_score       |
++------------------------+
+        |
+        | 1 → 1
+        v
++------------------------+
+|   music_timelines      |
++------------------------+
+| id (PK)                |
+| song_version_id (FK)   |
+| bpm                    |
+| total_duration        |
+| resolution            |
++------------------------+
+        |
+        | 1 → N
+        v
++------------------------+
+|    musical_events      |
++------------------------+
+| id (PK)                |
+| music_timeline_id (FK) |
+| event_type            |
+| pitch                 |
+| start_time           |
+| end_time             |
++------------------------+
+
+----------------------------------------------------
+
++------------------------+
+|   playback_sessions    |
++------------------------+
+| id (PK)                |
+| song_id (FK)           |
+| song_version_id (FK)   |
+| current_time          |
+| is_playing            |
+| speed                 |
++------------------------+
+
+----------------------------------------------------
+
++------------------------+
+|     content_assets     |
++------------------------+
+| id (PK)                |
+| song_id (FK)           |
+| asset_type            |
+| file_path            |
++------------------------+
+
+----------------------------------------------------
+
+(FUTURO)
+
++------------------------+
+|        users           |
++------------------------+
+| id (PK)                |
+| email                 |
+| role                  |
++------------------------+
+        |
+        | 1 → N
+        v
++------------------------+
+|    user_progress       |
++------------------------+
+| id (PK)                |
+| user_id (FK)          |
+| song_id (FK)          |
+| song_version_id (FK)  |
+| completion %          |
++------------------------+
+===== ./docs/technical/phase_0/01_Core/data_Model_explination.md =====
+
+
+===== ./docs/technical/phase_0/01_Core/architecture_mapping_and_system_flow_phoenix.md =====
+
+# Architecture Mapping & System Flow
+
+lib/
+├── music_learning/                         # CONTEXT CORE (Phoenix Context Layer)
+│
+│   ├── application.ex                      # App entry
+│
+│   ├── state/                              # STATE MODEL (CONTROL GLOBAL)
+│   │   ├── state_model.ex                  # estado global (song, level, playback)
+│   │   ├── playback_state.ex              # play/pause/stop/tempo
+│   │   └── session_state.ex               # estado por usuario/session
+│
+│   ├── sync/                               # SYNC ENGINE (CORE MUSICAL)
+│   │   ├── sync_engine.ex                 # orquestador principal
+│   │   ├── time_coordinator.ex           # sincronización tiempo real
+│   │   └── note_tracker.ex               # tracking de nota actual
+│
+│   ├── timeline/                           # EVENT TIMELINE (VERDAD MUSICAL)
+│   │   ├── event_timeline.ex             # builder principal
+│   │   ├── musicxml_parser.ex           # MusicXML → events
+│   │   ├── timeline_builder.ex          # construcción de secuencia
+│   │   └── timeline_event.ex            # estructura de evento musical
+│
+│   ├── songs/                              # DATA LAYER (DOMINIO MUSICAL)
+│   │   ├── song.ex                       # entidad canción
+│   │   ├── level.ex                      # niveles de dificultad
+│   │   ├── song_library.ex              # selector de canciones
+│   │   └── song_loader.ex              # carga desde archivos
+│
+│   ├── workers/                            # BACKGROUND JOBS
+│   │   ├── musicxml_worker.ex          # procesamiento MusicXML
+│   │   ├── level_generator_worker.ex   # generación niveles
+│   │   └── preprocessing_worker.ex     # normalización y cache
+│
+│   ├── playback/                           # AUDIO CONTROL (BRIDGE TO JS)
+│   │   ├── playback_controller.ex       # comandos play/pause/stop
+│   │   ├── tempo_controller.ex          # velocidad
+│   │   └── audio_sync.ex                # coordinación con JS
+│
+│   ├── visual/                             # VISUAL LAYER LOGIC
+│   │   ├── color_mapper.ex              # notas → colores
+│   │   ├── notation_config.ex           # config visual (show/hide)
+│   │   └── highlight_engine.ex          # notas activas UI
+│
+│   └── music_learning.ex                 # CONTEXT MAIN ENTRY
+│
+├── music_learning_web/                    # WEB LAYER (LIVEVIEW + JS BRIDGE)
+│
+│   ├── live/
+│   │   ├── song_live/
+│   │   │   ├── show.ex                  # pantalla principal
+│   │   │   ├── controls_component.ex     # play/pause/speed
+│   │   │   ├── score_component.ex        # partitura OSMD
+│   │   │   └── settings_component.ex     # config visual
+│
+│   ├── hooks/                            # JS BRIDGE LAYER
+│   │   ├── osmd_hook.js                 # render partituras
+│   │   ├── tone_player_hook.js          # audio engine
+│   │   └── sync_hook.js                 # sync frontend-backend
+│
+│   ├── components/
+│   └── router.ex
+│
+└── music_learning_web.js                 # entry JS (hooks bootstrap)
+
+
+Mapeo arquitectura → código
+
+State Model
+lib/music_learning/state/
+
+Event Timeline
+lib/music_learning/timeline/
+
+Sync Engine
+lib/music_learning/sync/
+
+Playback (bridge JS)
+lib/music_learning/playback/
+
+Visual system
+lib/music_learning/visual/
+
+Workers
+lib/music_learning/workers/
+
+UI (LiveView)
+lib/music_learning_web/live/
+
+JS Bridge
+lib/music_learning_web/hooks/
+
+Flujo del sistema
+
+MusicXML
+   ↓
+Workers (preprocess)
+   ↓
+Event Timeline
+   ↓
+Sync Engine
+   ↓
+State Model
+   ↓
+LiveView
+   ↓
+JS Bridge
+   ↓
+OSMD + Tone.js
+
+===== ./README.md =====
+
+# music_learning_platform
+
+===== ./CLAUDE.md =====
+
+# CLAUDE.md — Music Learning Platform
+
+## Project
+Web platform for learning piano using a color-coded sheet music system.
+Target users: children and beginners with zero music theory.
+Core value: colored notation + progressive levels per song.
+
+## Tech Stack
+- Backend: Phoenix + Elixir
+- Frontend: Phoenix LiveView
+- Audio engine: Tone.js (JavaScript)
+- Score renderer: OpenSheetMusicDisplay (OSMD)
+- Music format: MusicXML (primary), MIDI (future)
+- Database: PostgreSQL
+- CSS: Tailwind CSS
+
+## Architecture — Mental Model
+```
+MusicXML → Workers → Event Timeline → Sync Engine → State Model
+                                                          ↓
+                                                      LiveView
+                                                          ↓
+                                                      JS Bridge
+                                                     ↙        ↘
+                                                 OSMD       Tone.js
+```
+
+Backend does NOT play audio or render music — it only coordinates.
+
+## Layer Responsibilities
+- State Model: runtime source of truth (active song, level, play/pause, tempo)
+- Event Timeline: MusicXML → timed events — the musical source of truth
+- Sync Engine: keeps audio + visual in sync against the timeline
+- JS Bridge (hooks): LiveView ↔ OSMD/Tone.js communication
+- Workers: async MusicXML processing, level generation, normalization
+- OSMD: SVG score rendering + note highlight
+- Tone.js: audio playback, Transport scheduler, BPM control
+
+## Code Structure
+```
+lib/
+├── music_learning/
+│   ├── state/       # state_model.ex, playback_state.ex, session_state.ex
+│   ├── sync/        # sync_engine.ex, time_coordinator.ex, note_tracker.ex
+│   ├── timeline/    # event_timeline.ex, musicxml_parser.ex, timeline_builder.ex
+│   ├── songs/       # song.ex, level.ex, song_library.ex, song_loader.ex
+│   ├── workers/     # musicxml_worker.ex, level_generator_worker.ex
+│   ├── playback/    # playback_controller.ex, tempo_controller.ex, audio_sync.ex
+│   └── visual/      # color_mapper.ex, notation_config.ex, highlight_engine.ex
+└── music_learning_web/
+    ├── live/song_live/  # show.ex, controls_component.ex, score_component.ex
+    ├── hooks/           # osmd_hook.js, tone_player_hook.js, sync_hook.js
+    └── router.ex
+```
+
+## Core Entities
+- Song: base entity (title, category, duration)
+- SongVersion: pedagogical level (melody | simplified | chords | full)
+- MusicTimeline: processed temporal structure (bpm, total_duration, resolution)
+- MusicalEvent: minimum sync unit (pitch, start_time, end_time, voice, color_key)
+- PlaybackSession: real-time playback state (current_time, is_playing, speed)
+- ContentAsset: files associated to a song (musicxml | audio | image | midi)
+
+## Phase 0 — Technical Validation (current)
+Goal: prove the stack can support the product.
+
+- 0.1 Phoenix project + Tailwind + test page
+- 0.2 Integrate OSMD — render static MusicXML
+- 0.3 Load MusicXML from files — switch between songs
+- 0.4 Integrate Tone.js — play notes
+- 0.5 Sync score + audio  ← highest risk
+- 0.6 Highlight current note
+- 0.7 Play / Pause / Stop controls
+- 0.8 Speed control
+- 0.9 Color system per note
+- 0.10 Functional demo with "Bartolito"
+
+## Critical Rules
+- Musical timing logic belongs in Event Timeline, never in LiveView
+- Tone.js is the only audio source — no other audio APIs
+- All sync goes through Sync Engine — OSMD never talks directly to Tone.js
+- JS Bridge (hooks) is the mandatory bridge between LiveView and JS engines
+- Workers handle heavy processing — never inside mount or handle_event
+
+------------------------------------------------------------
+
+## Token Optimization (IMPORTANT)
+
+- Respond only in English.
+- Do not mix languages.
+- Be concise and direct.
+- Do not generate long summaries after tasks.
+- Do not explain code unless explicitly requested.
+- Do not describe obvious implementation details.
+- Do not repeat information already mentioned.
+- Do not restate requirements.
+- Do not use tables unless strictly necessary.
+- Avoid sections like "What was done", "Summary", etc.
+
+### Task Completion Format
+
+When finished, respond ONLY with:
+- Status (completed/pending + short summary)
+- Modified files
+- Tests added/modified
+- Test results
+
+### Code Analysis Rules
+
+- Read only necessary files
+- Avoid full repo scans
+- Avoid global searches unless needed
+- Do not inspect unrelated modules
+- Reuse existing context
+
+### Information Requests
+
+- Ask specific questions
+- Request specific files
+- Avoid directory-wide analysis
+
+### Objective
+
+Minimize token usage while maintaining correctness and implementation quality.
+
+===== ./TOKEN_OPTIMIZATION.MD =====
+
+
+## Token Optimization (IMPORTANT)
+
+- Respond only in English.
+- Do not mix languages.
+- Be concise and direct.
+- Do not generate long summaries after tasks.
+- Do not explain code unless explicitly requested.
+- Do not describe obvious implementation details.
+- Do not repeat information already mentioned.
+- Do not restate requirements.
+- Do not use tables unless strictly necessary.
+- Avoid sections like "What was done", "Summary", etc.
+
+### Task Completion Format
+
+When finished, respond ONLY with:
+- Status (completed/pending + short summary)
+- Modified files
+- Tests added/modified
+- Test results
+
+### Code Analysis Rules
+
+- Read only necessary files
+- Avoid full repo scans
+- Avoid global searches unless needed
+- Do not inspect unrelated modules
+- Reuse existing context
+
+### Information Requests
+
+- Ask specific questions
+- Request specific files
+- Avoid directory-wide analysis
+
+### Objective
+
+Minimize token usage while maintaining correctness and implementation quality.
+===== ./project_dump.txt =====
+
