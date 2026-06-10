@@ -1,0 +1,66 @@
+name: music_learning_platform
+
+# ── Desarrollo local ─────────────────────────────────────────────────────────
+#
+#   Arrancar:       docker compose up
+#   Primera vez:    docker compose up --build
+#   Consola iex:    docker compose exec app iex -S mix
+#   Migraciones:    docker compose exec app mix ecto.migrate
+#   Tests:          docker compose exec -e MIX_ENV=test app mix test
+#   Parar y borrar: docker compose down -v   (elimina volúmenes también)
+
+services:
+
+  # ── PostgreSQL 16 ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: music_learning_platform_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5410:5432"        # accesible desde el host para psql / DBeaver
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d music_learning_platform_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Phoenix app (modo desarrollo) ─────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    environment:
+      MIX_ENV: dev
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: music_learning_platform_dev
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: music_learning_platform_test
+    volumes:
+      - .:/app                          # código fuente montado en vivo
+      - mix_deps:/app/deps              # deps cacheadas entre reinicios
+      - build_cache:/app/_build         # artefactos de compilación
+      - hex_cache:/root/.hex            # paquetes hex globales
+    ports:
+      - "4010:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  mix_deps:
+  build_cache:
+  hex_cache:
