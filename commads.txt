@@ -4,3 +4,6 @@
 
 
 tree -a -I '_build|deps|node_modules|.elixir_ls|.git|coverage|tmp|priv/static/assets|priv/static/uploads' -L 5
+
+
+docker compose exec app mix ecto.migrate
