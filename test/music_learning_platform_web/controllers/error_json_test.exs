@@ -2,7 +2,9 @@ defmodule MusicLearningPlatformWeb.ErrorJSONTest do
   use MusicLearningPlatformWeb.ConnCase, async: true
 
   test "renders 404" do
-    assert MusicLearningPlatformWeb.ErrorJSON.render("404.json", %{}) == %{errors: %{detail: "Not Found"}}
+    assert MusicLearningPlatformWeb.ErrorJSON.render("404.json", %{}) == %{
+             errors: %{detail: "Not Found"}
+           }
   end
 
   test "renders 500" do

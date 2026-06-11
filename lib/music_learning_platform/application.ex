@@ -10,7 +10,8 @@ defmodule MusicLearningPlatform.Application do
     children = [
       MusicLearningPlatformWeb.Telemetry,
       MusicLearningPlatform.Repo,
-      {DNSCluster, query: Application.get_env(:music_learning_platform, :dns_cluster_query) || :ignore},
+      {DNSCluster,
+       query: Application.get_env(:music_learning_platform, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MusicLearningPlatform.PubSub},
       # Start a worker by calling: MusicLearningPlatform.Worker.start_link(arg)
       # {MusicLearningPlatform.Worker, arg},
