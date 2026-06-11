@@ -1,109 +1,279 @@
-# Architecture Mapping & System Flow
+# Architecture Mapping — Strict Phoenix Context Architecture
 
+## Objetivo
+
+Separar claramente:
+
+* Presentation Layer
+* Application Layer
+* Domain Layer
+* Infrastructure Layer
+
+Manteniendo la filosofía de Phoenix Contexts.
+
+---
+
+# Estructura General
+
+```text
 lib/
-├── music_learning/                         # CONTEXT CORE (Phoenix Context Layer)
+├── music_learning/
 │
-│   ├── application.ex                      # App entry
+│   ├── music_learning.ex
 │
-│   ├── state/                              # STATE MODEL (CONTROL GLOBAL)
-│   │   ├── state_model.ex                  # estado global (song, level, playback)
-│   │   ├── playback_state.ex              # play/pause/stop/tempo
-│   │   └── session_state.ex               # estado por usuario/session
+│   ├── domain/
+│   │
+│   │   ├── songs/
+│   │   │   ├── song.ex
+│   │   │   ├── song_version.ex
+│   │   │   └── content_asset.ex
+│   │   │
+│   │   ├── timeline/
+│   │   │   ├── music_timeline.ex
+│   │   │   └── musical_event.ex
+│   │   │
+│   │   └── playback/
+│   │       └── playback_session.ex
 │
-│   ├── sync/                               # SYNC ENGINE (CORE MUSICAL)
-│   │   ├── sync_engine.ex                 # orquestador principal
-│   │   ├── time_coordinator.ex           # sincronización tiempo real
-│   │   └── note_tracker.ex               # tracking de nota actual
+│   ├── application/
+│   │
+│   │   ├── songs/
+│   │   │   ├── song_library.ex
+│   │   │   └── song_loader_service.ex
+│   │   │
+│   │   ├── playback/
+│   │   │   ├── playback_controller.ex
+│   │   │   └── tempo_controller.ex
+│   │   │
+│   │   ├── sync/
+│   │   │   ├── sync_engine.ex
+│   │   │   ├── time_coordinator.ex
+│   │   │   └── note_tracker.ex
+│   │   │
+│   │   └── visual/
+│   │       ├── color_mapper.ex
+│   │       ├── notation_config.ex
+│   │       └── highlight_engine.ex
 │
-│   ├── timeline/                           # EVENT TIMELINE (VERDAD MUSICAL)
-│   │   ├── event_timeline.ex             # builder principal
-│   │   ├── musicxml_parser.ex           # MusicXML → events
-│   │   ├── timeline_builder.ex          # construcción de secuencia
-│   │   └── timeline_event.ex            # estructura de evento musical
+│   ├── infrastructure/
+│   │
+│   │   ├── persistence/
+│   │   │   ├── repo.ex
+│   │   │   └── schemas/
+│   │   │
+│   │   ├── musicxml/
+│   │   │   ├── musicxml_parser.ex
+│   │   │   └── timeline_builder.ex
+│   │   │
+│   │   ├── workers/
+│   │   │   ├── musicxml_worker.ex
+│   │   │   ├── preprocessing_worker.ex
+│   │   │   └── level_generator_worker.ex
+│   │   │
+│   │   └── storage/
+│   │       └── file_storage.ex
 │
-│   ├── songs/                              # DATA LAYER (DOMINIO MUSICAL)
-│   │   ├── song.ex                       # entidad canción
-│   │   ├── level.ex                      # niveles de dificultad
-│   │   ├── song_library.ex              # selector de canciones
-│   │   └── song_loader.ex              # carga desde archivos
+│   └── state/
+│       ├── playback_state.ex
+│       ├── session_state.ex
+│       └── state_model.ex
 │
-│   ├── workers/                            # BACKGROUND JOBS
-│   │   ├── musicxml_worker.ex          # procesamiento MusicXML
-│   │   ├── level_generator_worker.ex   # generación niveles
-│   │   └── preprocessing_worker.ex     # normalización y cache
-│
-│   ├── playback/                           # AUDIO CONTROL (BRIDGE TO JS)
-│   │   ├── playback_controller.ex       # comandos play/pause/stop
-│   │   ├── tempo_controller.ex          # velocidad
-│   │   └── audio_sync.ex                # coordinación con JS
-│
-│   ├── visual/                             # VISUAL LAYER LOGIC
-│   │   ├── color_mapper.ex              # notas → colores
-│   │   ├── notation_config.ex           # config visual (show/hide)
-│   │   └── highlight_engine.ex          # notas activas UI
-│
-│   └── music_learning.ex                 # CONTEXT MAIN ENTRY
-│
-├── music_learning_web/                    # WEB LAYER (LIVEVIEW + JS BRIDGE)
+├── music_learning_web/
 │
 │   ├── live/
 │   │   ├── song_live/
-│   │   │   ├── show.ex                  # pantalla principal
-│   │   │   ├── controls_component.ex     # play/pause/speed
-│   │   │   ├── score_component.ex        # partitura OSMD
-│   │   │   └── settings_component.ex     # config visual
-│
-│   ├── hooks/                            # JS BRIDGE LAYER
-│   │   ├── osmd_hook.js                 # render partituras
-│   │   ├── tone_player_hook.js          # audio engine
-│   │   └── sync_hook.js                 # sync frontend-backend
-│
+│   │   └── components/
+│   │
+│   ├── hooks/
+│   │   ├── osmd_hook.js
+│   │   ├── tone_player_hook.js
+│   │   └── sync_hook.js
+│   │
 │   ├── components/
 │   └── router.ex
 │
-└── music_learning_web.js                 # entry JS (hooks bootstrap)
+└── music_learning_web.ex
+```
 
+---
 
-Mapeo arquitectura → código
+# Responsabilidades
 
-State Model
-lib/music_learning/state/
+## Presentation Layer
 
-Event Timeline
-lib/music_learning/timeline/
+Ubicación:
 
-Sync Engine
-lib/music_learning/sync/
+```text
+music_learning_web/
+```
 
-Playback (bridge JS)
-lib/music_learning/playback/
+Responsable de:
 
-Visual system
-lib/music_learning/visual/
+* LiveViews
+* Components
+* Router
+* Hooks JS
+* Eventos UI
 
-Workers
-lib/music_learning/workers/
+Nunca:
 
-UI (LiveView)
-lib/music_learning_web/live/
+* Reglas de negocio
+* Repo
+* Parsing MusicXML
 
-JS Bridge
-lib/music_learning_web/hooks/
+---
 
-Flujo del sistema
+## Application Layer
 
-MusicXML
-   ↓
-Workers (preprocess)
-   ↓
-Event Timeline
-   ↓
-Sync Engine
-   ↓
-State Model
-   ↓
+Ubicación:
+
+```text
+music_learning/application/
+```
+
+Responsable de:
+
+* Casos de uso
+* Orquestación
+* Coordinación de procesos
+
+Ejemplos:
+
+```text
+SyncEngine
+PlaybackController
+SongLibrary
+```
+
+Pregunta que responde:
+
+> ¿Qué debe hacer el sistema?
+
+---
+
+## Domain Layer
+
+Ubicación:
+
+```text
+music_learning/domain/
+```
+
+Responsable de:
+
+* Entidades
+* Value Objects
+* Reglas del negocio musical
+
+Ejemplos:
+
+```text
+Song
+SongVersion
+MusicTimeline
+MusicalEvent
+PlaybackSession
+```
+
+Pregunta que responde:
+
+> ¿Qué es el negocio?
+
+---
+
+## Infrastructure Layer
+
+Ubicación:
+
+```text
+music_learning/infrastructure/
+```
+
+Responsable de:
+
+* Base de datos
+* MusicXML
+* Archivos
+* Workers
+* APIs externas
+
+Pregunta que responde:
+
+> ¿Cómo se implementa técnicamente?
+
+---
+
+## Runtime State Layer
+
+Ubicación:
+
+```text
+music_learning/state/
+```
+
+Responsable de:
+
+* Estado temporal
+* Reproducción activa
+* Sesiones LiveView
+* Sincronización runtime
+
+No pertenece al dominio.
+
+No representa información persistente.
+
+---
+
+# Flujo Final
+
+```text
 LiveView
-   ↓
-JS Bridge
-   ↓
-OSMD + Tone.js
+    ↓
+Context API
+    ↓
+Application Services
+    ↓
+Domain
+    ↓
+Infrastructure
+```
+
+Ejemplo:
+
+```text
+SongLive.Show
+    ↓
+MusicLearning.play_song()
+    ↓
+PlaybackController
+    ↓
+SyncEngine
+    ↓
+MusicTimeline
+    ↓
+MusicalEvent
+    ↓
+StateModel
+    ↓
+JS Hooks
+```
+
+---
+
+# Regla Principal
+
+Los LiveViews nunca conocen:
+
+* Repo
+* MusicXML
+* Workers
+* Parsing
+* SQL
+
+Los LiveViews solamente hablan con:
+
+```elixir
+MusicLearning
+```
+
+que actúa como fachada pública del Context.
