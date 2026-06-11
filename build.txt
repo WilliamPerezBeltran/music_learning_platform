@@ -1,0 +1,214 @@
+
+Completed. Zero warnings, all migrations ran successfully.
+
+Modified files: 27 new files + application.ex (ETS init)
+
+Created:
+- domain/ — Song, SongVersion, ContentAsset, MusicTimeline, MusicalEvent, PlaybackSession (Ecto schemas + changesets)
+- application/ — SongLibrary, SongLoaderService, PlaybackController, TempoController, SyncEngine, TimeCoordinator, NoteTracker, ColorMapper, NotationConfig, HighlightEngine
+- infrastructure/ — MusicXMLParser, TimelineBuilder, MusicXMLWorker, PreprocessingWorker, LevelGeneratorWorker, FileStorage
+- state/ — StateModel (ETS-backed), PlaybackState, SessionState
+- music_learning.ex — public context facade (only entry point for LiveViews)
+- 6 migrations → all tables created in DB
+
+✻ Cooked for 4m 41s
+============================================================================================================
+docs/planned/technical/phase_0/01_core
+
+No. Todo lo de 01_Core ya está implementado:
+
+- architecture_mapping_and_system_flow_phoenix.md → implementado (toda la estructura de capas)
+- entities.md + data_Model.md → implementado (schemas + migrations)
+- database_design.md → implementado (tablas + índices)
+- architecture.md + data_Model_explination.md → son explicaciones, no código
+
+El siguiente paso según el roadmap de Phase 0 es 0.2: integrar OSMD (renderizar un MusicXML estático en el browser).
+============================================================================================================
+
+
+docs/planned/technical/phase_0/02_Rendering/03_MusicXML_Integration.md -> implementar 03_MusicXML_Integration
+
+Pipeline completo y funcionando.
+
+---
+Completed:
+- priv/static/songs/bartolito_level1.xml — 12 compases, 4/4, 120 BPM
+- priv/static/songs/estrellita_level1.xml — 18 compases, 3/4, 100 BPM
+- musicxml_parser.ex — reescrito con procesamiento medida por medida, divisions tracking y chord handling
+- priv/repo/seeds.exs — crea Song → SongVersion → ContentAsset → MusicTimeline → MusicalEvents
+
+Modified files:
+- lib/music_learning_platform/infrastructure/musicxml/musicxml_parser.ex
+- priv/repo/seeds.exs
+
+Pipeline verificado: Bartolito (42 eventos) y Estrellita (42 eventos) insertados con start_time, end_time, color_key y voice correctos.
+
+
+Tests añadidos:
+
+┌───────────────────────────────────────────────────┬─────────────────────────────────────────────────────┐
+│                      Archivo                      │                        Tests                        │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ domain/songs/song_test.exs                        │ changeset validations + persistence                 │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ domain/songs/song_version_test.exs                │ validations, version_types, level_index             │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ domain/timeline/musical_event_test.exs            │ validations, event_type, voice, duration            │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ application/songs/song_library_test.exs           │ CRUD, list, preload                                 │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ application/visual/color_mapper_test.exs          │ notas naturales, sostenidos, nil, octave-agnostic   │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ application/visual/notation_config_test.exs       │ defaults, toggle, from_map                          │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ application/sync/note_tracker_test.exs            │ active events, boundaries, upcoming                 │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ infrastructure/musicxml/musicxml_parser_test.exs  │ pitch, timing, rests, index, bartolito real         │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ infrastructure/musicxml/timeline_builder_test.exs │ transaction, total_duration, color_key, event order │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ infrastructure/storage/file_storage_test.exs      │ read, exists, list                                  │
+├───────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ state/state_model_test.exs                        │ put/get, playing, position, reset, speed, delete    │
+└───────────────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+
+
+❯ con lo que se hizo la app que es capaz de hacer ? respuesta en forma de parrafos
+
+La plataforma tiene ahora un backend completamente estructurado por capas: dominio, aplicación, infraestructura y estado. Todas las entidades del sistema musical están definidas como schemas de Ecto con sus validaciones y relaciones, y sus tablas existen en la base de datos con migraciones ejecutadas.
+
+El pipeline de procesamiento MusicXML funciona de extremo a extremo: lee un archivo .xml del disco, lo parsea medida por medida extrayendo notas con tiempos exactos en segundos, y persiste el resultado como un MusicTimeline con todos sus MusicalEvent en la base de datos. Los seeds crean dos canciones reales (Bartolito y Estrellita) con sus versiones y eventos procesados.
+
+El sistema de colores asigna un color fijo a cada nota musical (Do=rojo, Re=naranja, Mi=amarillo, etc.) y ese color queda guardado en cada MusicalEvent al momento del procesamiento. La configuración visual por sesión (colores, nombres de notas, mano izquierda, etc.) puede activarse y desactivarse en runtime sin tocar la base de datos.
+
+El estado de reproducción vive en ETS: cada sesión puede iniciar, pausar, detener, hacer seek y cambiar velocidad (0.5x–2.0x). El NoteTracker puede calcular qué eventos están activos en cualquier instante dado, que es la pieza central para sincronizar audio y visual durante la reproducción.
+
+Lo que la app no puede hacer todavía: mostrar nada en el navegador relacionado con música, reproducir audio, ni renderizar una partitura. El frontend musical (OSMD, Tone.js, hooks JS, LiveView de la canción) no está implementado aún.
+
+Queda en:
+
+commit 420d084151a6d87c47b42c1a9630da51c7a21b0a (origin/feature/phase0-musicxml-integration, feature/phase0-musicxml-integration)
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Thu Jun 11 14:43:07 2026 -0500
+
+    feat(musicxml): add MusicXML pipeline, seeds, static files and test suite
+
+============================================================================================================
+implementar docs/planned/technical/phase_0/02_Rendering/04_OpenSheetMusicDisplay.md
+
+Completed.
+
+Modified files:
+- assets/js/app.js — registra OsmdHook
+- assets/css/app.css — clases .note-do … .note-si y .note-active
+- lib/music_learning_platform_web/router.ex — rutas /songs y /songs/:id
+- lib/music_learning_platform/music_learning.ex — get_musicxml_content/1
+
+Archivos nuevos:
+- assets/js/osmd_hook.js — hook que inicializa OSMD, load_score, highlight_note, clear_highlight, applyNoteColors
+- lib/music_learning_platform_web/live/song_live/show.ex — LiveView con sidebar de canciones, selector de niveles, contenedor del score
+
+Qué hace ahora la app en http://localhost:4000/songs:
+- Lista las canciones del sidebar
+- Al hacer click en una → carga el MusicXML y renderiza la partitura con OSMD como SVG
+- Soporta cambio entre canciones (steps 0.2 y 0.3 del roadmap)
+
+
+
+87 tests, 0 failures.
+
+Tests añadidos (test/music_learning_platform_web/live/song_live_test.exs):
+
+┌──────────────────────────┬────────────────────────────────────────────────────────────────┐
+│         Describe         │                              Test                              │
+├──────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ mount /songs             │ renders, empty state, sidebar con títulos, placeholder         │
+├──────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ handle_params /songs/:id │ título en header, score container, OsmdHook, phx-update=ignore │
+├──────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ select_song              │ navega con push_patch                                          │
+├──────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ select_version           │ resalta botón de versión activa                                │
+├──────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ score_loaded             │ muestra count de notas tras hook                               │
+└──────────────────────────┴────────────────────────────────────────────────────────────────┘
+
+
+
+Cambios por breakpoint:
+
+┌───────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│    Tamaño     │                                            Comportamiento                                             │
+├───────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Mobile (< md) │ Layout vertical. Sidebar oculto con slide-in. Botón hamburguesa en header. Overlay oscuro al abrirlo. │
+├───────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Tablet (md+)  │ Layout horizontal. Sidebar siempre visible, w-56. Hamburguesa oculta.                                 │
+├───────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Desktop (lg+) │ Sidebar w-64.                                                                                         │
+├───────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ TV (xl+)      │ Sidebar w-72. Score ocupa todo el espacio disponible.                                                 │
+└───────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Otros fixes: h-screen → min-h-dvh (evita recorte en mobile), padding adaptativo px-3 sm:px-6, título con truncate, texto de niveles abreviado a N1/N2.
+
+
+
+❯ agregar documentacion tecnica
+
+● Write(docs/implemented/technical_documentation/osmd_integration.md)
+Wrote 121 lines to docs/implemented/technical_documentation/osmd_integration.md
+ Integración OSMD — Renderizado de Partituras
+
+# ¿Qué hace el sistema?
+
+enderiza archivos MusicXML como partituras SVG interactivas en el navegador usando OpenSheetMusicDisplay (OSMD).
+ermite cambiar entre canciones y niveles sin recargar la página.
+l sistema es responsive: funciona en mobile, tablet, desktop y TV.
+
+--
+
+- Archivo modificado: docs/implemented/technical_documentation/osmd_integration.md
+  - Actualizada la lista de archivos para incluir layouts.ex
+  - Añadida sección "Layout del player" que explica por qué Layouts.app cortaba la partitura y cómo Layouts.player lo resuelve
+
+✻ Brewed for 24s
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================
+============================================================================================================

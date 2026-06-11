@@ -26,6 +26,16 @@ defmodule MusicLearningPlatformWeb.Layouts do
 
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
+  slot :inner_block, required: true
+
+  def player(assigns) do
+    ~H"""
+    <.flash_group flash={@flash} />
+    {render_slot(@inner_block)}
+    """
+  end
+
+  attr :flash, :map, required: true, doc: "the map of flash messages"
 
   attr :current_scope, :map,
     default: nil,

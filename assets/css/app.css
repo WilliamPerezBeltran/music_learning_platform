@@ -103,3 +103,17 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Note colors — applied to SVG note elements by OsmdHook */
+.note-do  { fill: #FF4444; }
+.note-re  { fill: #FF8C00; }
+.note-mi  { fill: #FFD700; }
+.note-fa  { fill: #32CD32; }
+.note-sol { fill: #1E90FF; }
+.note-la  { fill: #8A2BE2; }
+.note-si  { fill: #FF69B4; }
+
+.note-active {
+  filter: brightness(1.4) drop-shadow(0 0 4px currentColor);
+  transition: filter 0.1s ease;
+}
