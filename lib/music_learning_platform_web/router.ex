@@ -18,6 +18,8 @@ defmodule MusicLearningPlatformWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/songs", SongLive.Show, :index
+    live "/songs/:id", SongLive.Show, :show
   end
 
   # Other scopes may use custom stacks.

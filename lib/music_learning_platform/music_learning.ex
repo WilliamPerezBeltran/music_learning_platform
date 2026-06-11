@@ -9,6 +9,14 @@ defmodule MusicLearningPlatform.MusicLearning do
 
   def list_songs, do: SongLibrary.list_published_songs()
 
+  def get_musicxml_content(song_version_id) do
+    with version <- SongLibrary.get_song_version!(song_version_id),
+         {:ok, content} <-
+           MusicLearningPlatform.Infrastructure.Storage.FileStorage.read(version.musicxml_path) do
+      {:ok, content}
+    end
+  end
+
   def get_song(id), do: SongLibrary.get_song_with_versions!(id)
 
   def list_song_versions(song_id), do: SongLibrary.list_song_versions(song_id)
