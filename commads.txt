@@ -1,3 +1,6 @@
  tree -a -I ".git" --noreport | while read -r line; do   echo "$line";    path=$(echo "$line" | sed 's/[│├└─ ]//g' | sed 's/^\.//');    if [ -f "$path" ]; then     echo "      contenido";     sed 's/^/      /' "$path";   fi; done
 
 
+
+
+tree -a -I '_build|deps|node_modules|.elixir_ls|.git|coverage|tmp|priv/static/assets|priv/static/uploads' -L 5
