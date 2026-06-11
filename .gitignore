@@ -35,6 +35,3 @@ music_learning_platform-*.tar
 npm-debug.log
 /assets/node_modules/
 
-build.txt
-logs.txt
-prompts.txt
