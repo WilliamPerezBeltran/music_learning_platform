@@ -44,6 +44,12 @@ defmodule MusicLearningPlatform.Application.Songs.SongLibrary do
     |> Repo.insert()
   end
 
+  def create_song!(attrs) do
+    %Song{}
+    |> Song.changeset(attrs)
+    |> Repo.insert!()
+  end
+
   def update_song(%Song{} = song, attrs) do
     song
     |> Song.changeset(attrs)
@@ -54,6 +60,12 @@ defmodule MusicLearningPlatform.Application.Songs.SongLibrary do
     %SongVersion{}
     |> SongVersion.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def create_song_version!(attrs) do
+    %SongVersion{}
+    |> SongVersion.changeset(attrs)
+    |> Repo.insert!()
   end
 
   def create_content_asset(attrs) do
