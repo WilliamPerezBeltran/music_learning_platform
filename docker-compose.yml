@@ -52,7 +52,7 @@ services:
       - build_cache:/app/_build         # artefactos de compilación
       - hex_cache:/root/.hex            # paquetes hex globales
     ports:
-      - "4010:4000"
+      - "4000:4000"
     depends_on:
       db:
         condition: service_healthy
