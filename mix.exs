@@ -83,7 +83,11 @@ defmodule MusicLearningPlatform.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind music_learning_platform", "esbuild music_learning_platform"],
+      "assets.build": [
+        "compile",
+        "tailwind music_learning_platform",
+        "esbuild music_learning_platform"
+      ],
       "assets.deploy": [
         "tailwind music_learning_platform --minify",
         "esbuild music_learning_platform --minify",
