@@ -1,0 +1,9 @@
+{
+  "name": "music_learning_platform_assets",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "opensheetmusicdisplay": "^1.9.1",
+    "tone": "^15.1.3"
+  }
+}
