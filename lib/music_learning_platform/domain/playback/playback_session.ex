@@ -20,7 +20,15 @@ defmodule MusicLearningPlatform.Domain.Playback.PlaybackSession do
   end
 
   @required [:song_id, :song_version_id]
-  @optional [:current_time, :is_playing, :speed, :loop_enabled, :client_id, :started_at, :paused_at]
+  @optional [
+    :current_time,
+    :is_playing,
+    :speed,
+    :loop_enabled,
+    :client_id,
+    :started_at,
+    :paused_at
+  ]
 
   def changeset(session, attrs) do
     session

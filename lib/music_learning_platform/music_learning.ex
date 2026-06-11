@@ -38,7 +38,9 @@ defmodule MusicLearningPlatform.MusicLearning do
 
   # Visual
 
-  def toggle_notation(session_id, option), do: SessionState.toggle_notation_option(session_id, option)
+  def toggle_notation(session_id, option),
+    do: SessionState.toggle_notation_option(session_id, option)
+
   def get_notation_config(session_id), do: SessionState.get_notation_config(session_id)
 
   def build_highlights(active_events), do: HighlightEngine.build_highlight_payload(active_events)
