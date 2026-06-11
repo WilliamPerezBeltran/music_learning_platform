@@ -11,12 +11,9 @@ RUN apt-get update && apt-get install -y \
 RUN mix local.hex --force && mix local.rebar --force
 
 COPY mix.exs mix.lock ./
-RUN mix deps.get
 
 COPY . .
 
-RUN mix compile
-
 EXPOSE 4000
 
-CMD ["mix", "phx.server"]
+CMD ["sh", "-c", "mix deps.get && mix phx.server"]

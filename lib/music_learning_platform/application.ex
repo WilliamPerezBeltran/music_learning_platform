@@ -7,6 +7,8 @@ defmodule MusicLearningPlatform.Application do
 
   @impl true
   def start(_type, _args) do
+    MusicLearningPlatform.State.PlaybackState.init_table()
+
     children = [
       MusicLearningPlatformWeb.Telemetry,
       MusicLearningPlatform.Repo,
