@@ -1,16 +1,26 @@
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
 
-// Order: C, D, E, F, G, A, B, rest
+// Order: C(do), D(re), E(mi), F(fa), G(sol), A(la), B(si), rest
 const NOTE_COLOR_SET = [
-  "#FF4444",
-  "#FF8C00",
-  "#FFD700",
-  "#32CD32",
-  "#1E90FF",
-  "#8A2BE2",
-  "#FF69B4",
+  "#E53935",
+  "#FB8C00",
+  "#FDD835",
+  "#43A047",
+  "#1E88E5",
+  "#8E24AA",
+  "#E91E63",
   "#888888",
 ]
+
+const COLOR_KEY_HEX = {
+  do:  "#E53935",
+  re:  "#FB8C00",
+  mi:  "#FDD835",
+  fa:  "#43A047",
+  sol: "#1E88E5",
+  la:  "#8E24AA",
+  si:  "#E91E63",
+}
 
 const OsmdHook = {
   mounted() {
@@ -19,6 +29,7 @@ const OsmdHook = {
     this.handleEvent("load_score", ({ musicxml }) => this.loadScore(musicxml))
     this.handleEvent("highlight_note", ({ index, color_key }) => this.highlightNote(index, color_key))
     this.handleEvent("clear_highlight", () => this.clearHighlight())
+    this.handleEvent("toggle_colors", ({ enabled }) => this.toggleColors(enabled))
   },
 
   async loadScore(musicxml) {
@@ -43,14 +54,23 @@ const OsmdHook = {
     }
   },
 
+  toggleColors(enabled) {
+    if (enabled) {
+      this.el.classList.remove("colors-disabled")
+    } else {
+      this.el.classList.add("colors-disabled")
+    }
+  },
+
   highlightNote(index, color_key) {
     this.clearHighlight()
+    const hex = COLOR_KEY_HEX[color_key] || color_key
     const els = this.el.querySelectorAll(
       `g[data-note-index="${index}"] path, g[data-note-index="${index}"] ellipse`
     )
     els.forEach((el) => {
       el.dataset.origFill = el.style.fill
-      el.style.fill = color_key
+      el.style.fill = hex
       el.classList.add("note-active")
     })
     this.activeNoteEls = Array.from(els)

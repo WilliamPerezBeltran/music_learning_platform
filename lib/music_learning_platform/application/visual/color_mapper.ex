@@ -1,32 +1,36 @@
 defmodule MusicLearningPlatform.Application.Visual.ColorMapper do
-  @note_colors %{
-    "C" => "#FF4444",
-    "D" => "#FF8C00",
-    "E" => "#FFD700",
-    "F" => "#32CD32",
-    "G" => "#1E90FF",
-    "A" => "#8A2BE2",
-    "B" => "#FF69B4",
-    "C#" => "#FF6666",
-    "D#" => "#FFA500",
-    "F#" => "#00FA9A",
-    "G#" => "#00BFFF",
-    "A#" => "#DA70D6"
+  @color_keys %{
+    "C" => "do",
+    "D" => "re",
+    "E" => "mi",
+    "F" => "fa",
+    "G" => "sol",
+    "A" => "la",
+    "B" => "si"
   }
 
-  def color_for_pitch(pitch) when is_binary(pitch) do
-    note_class = extract_note_class(pitch)
-    Map.get(@note_colors, note_class, "#CCCCCC")
-  end
+  @hex_colors %{
+    "do" => "#E53935",
+    "re" => "#FB8C00",
+    "mi" => "#FDD835",
+    "fa" => "#43A047",
+    "sol" => "#1E88E5",
+    "la" => "#8E24AA",
+    "si" => "#E91E63"
+  }
 
-  def color_for_pitch(_), do: "#CCCCCC"
-
-  def all_colors, do: @note_colors
-
-  defp extract_note_class(pitch) do
-    case Regex.run(~r/^([A-G][#b]?)/, pitch) do
-      [_, note_class] -> note_class
-      _ -> pitch
+  def get_color_key(pitch) when is_binary(pitch) and pitch != "" do
+    case Regex.run(~r/^([A-G])/, pitch) do
+      [_, note] -> Map.get(@color_keys, note)
+      _ -> nil
     end
   end
+
+  def get_color_key(_), do: nil
+
+  def color_for_pitch(pitch), do: get_color_key(pitch)
+
+  def get_hex(color_key), do: Map.get(@hex_colors, color_key, "#000000")
+
+  def all_colors, do: @hex_colors
 end

@@ -26,6 +26,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       |> assign(:bpm, 120.0)
       |> assign(:timeline_loaded, false)
       |> assign(:speeds, @speeds)
+      |> assign(:colors_enabled, true)
 
     {:ok, socket}
   end
@@ -154,6 +155,15 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       {:error, _} ->
         {:noreply, socket}
     end
+  end
+
+  def handle_event("toggle_colors", _, socket) do
+    colors_enabled = !socket.assigns.colors_enabled
+
+    {:noreply,
+     socket
+     |> assign(:colors_enabled, colors_enabled)
+     |> push_event("toggle_colors", %{enabled: colors_enabled})}
   end
 
   # --- Tone.js → LiveView callbacks ---
@@ -326,6 +336,16 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
               </button>
 
               <div class="ml-auto flex items-center gap-1">
+                <button
+                  phx-click="toggle_colors"
+                  class={["btn btn-xs", if(@colors_enabled, do: "btn-primary", else: "btn-ghost")]}
+                  aria-label="Alternar colores"
+                >
+                  <.icon name="hero-swatch" class="w-4 h-4" />
+                </button>
+
+                <div class="w-px h-4 bg-base-300 mx-1"></div>
+
                 <%= for s <- @speeds do %>
                   <button
                     phx-click="set_speed"
