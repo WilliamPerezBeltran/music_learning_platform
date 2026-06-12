@@ -64,4 +64,7 @@ defmodule MusicLearningPlatform.MusicLearning do
   # Sync tick (called from LiveView on timer)
 
   def sync_tick(session_id, current_time), do: SyncEngine.tick(session_id, current_time)
+
+  def note_active(session_id, note_index, current_time),
+    do: SyncEngine.note_active(session_id, note_index, current_time)
 end
