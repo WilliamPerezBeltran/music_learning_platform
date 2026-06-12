@@ -168,7 +168,12 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
 
   # --- Tone.js → LiveView callbacks ---
 
-  def handle_event("note_active", %{"index" => index, "color_key" => color_key}, socket) do
+  def handle_event(
+        "note_active",
+        %{"index" => index, "color_key" => color_key, "current_time" => current_time},
+        socket
+      ) do
+    MusicLearning.note_active(socket.assigns.session_id, index, current_time)
     {:noreply, push_event(socket, "highlight_note", %{index: index, color_key: color_key})}
   end
 

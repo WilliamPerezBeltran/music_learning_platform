@@ -8,6 +8,7 @@ defmodule MusicLearningPlatform.Application do
   @impl true
   def start(_type, _args) do
     MusicLearningPlatform.State.PlaybackState.init_table()
+    MusicLearningPlatform.Application.Sync.NoteTracker.init_table()
 
     children = [
       MusicLearningPlatformWeb.Telemetry,

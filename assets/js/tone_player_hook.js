@@ -101,7 +101,7 @@ const TonePlayerHook = {
       Tone.getTransport().schedule((time) => {
         this.synth.triggerAttackRelease(event.pitch, transportDuration, time)
         Tone.getDraw().schedule(() => {
-          this.pushEvent("note_active", { index: event.index, color_key: event.color_key })
+          this.pushEvent("note_active", { index: event.index, color_key: event.color_key, current_time: event.start_time })
         }, time)
       }, transportTime)
     })
