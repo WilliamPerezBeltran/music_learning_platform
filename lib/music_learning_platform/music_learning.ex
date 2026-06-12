@@ -29,6 +29,13 @@ defmodule MusicLearningPlatform.MusicLearning do
     end
   end
 
+  def get_timeline_for_version(song_version_id) do
+    case SongLoaderService.load_song_for_playback(song_version_id) do
+      {:ok, %{timeline: timeline}} -> {:ok, timeline}
+      error -> error
+    end
+  end
+
   def destroy_session(session_id), do: PlaybackState.destroy_session(session_id)
 
   # Playback

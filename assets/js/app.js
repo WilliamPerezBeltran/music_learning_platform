@@ -23,13 +23,18 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/music_learning_platform"
 import topbar from "../vendor/topbar"
+import * as Tone from "tone"
 import OsmdHook from "./osmd_hook"
+import TonePlayerHook from "./tone_player_hook"
+
+// Resume AudioContext on first user interaction (browser security requirement)
+document.addEventListener("click", () => Tone.start(), { once: true })
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, OsmdHook},
+  hooks: {...colocatedHooks, OsmdHook, TonePlayerHook},
 })
 
 // Show progress bar on live navigation and form submits

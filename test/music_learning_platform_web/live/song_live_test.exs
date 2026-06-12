@@ -4,6 +4,8 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
   import Phoenix.LiveViewTest
 
   alias MusicLearningPlatform.Application.Songs.SongLibrary
+  alias MusicLearningPlatform.Repo
+  alias MusicLearningPlatform.Domain.Timeline.{MusicTimeline, MusicalEvent}
 
   defp insert_song(attrs \\ %{}) do
     SongLibrary.create_song!(
@@ -25,6 +27,39 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
       )
     )
   end
+
+  defp insert_timeline(version, attrs \\ %{}) do
+    %MusicTimeline{}
+    |> MusicTimeline.changeset(
+      Map.merge(%{song_version_id: version.id, bpm: 120.0, total_duration: 10.0}, attrs)
+    )
+    |> Repo.insert!()
+  end
+
+  defp insert_event(timeline, attrs \\ %{}) do
+    Repo.insert_all(
+      MusicalEvent,
+      [
+        Map.merge(
+          %{
+            music_timeline_id: timeline.id,
+            event_type: "note_on",
+            pitch: "C4",
+            start_time: 0.0,
+            end_time: 0.5,
+            duration: 0.5,
+            voice: "melody",
+            color_key: "#FF4444",
+            index: 0
+          },
+          attrs
+        )
+      ],
+      returning: true
+    )
+  end
+
+  # --- mount ---
 
   describe "mount — /songs" do
     test "renders without crashing", %{conn: conn} do
@@ -50,7 +85,14 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
       {:ok, _view, html} = live(conn, ~p"/songs")
       assert html =~ "Selecciona una canción"
     end
+
+    test "playback controls are not rendered without a song", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/songs")
+      refute html =~ "tone-player"
+    end
   end
+
+  # --- handle_params ---
 
   describe "handle_params — /songs/:id" do
     test "renders song title in header", %{conn: conn} do
@@ -86,6 +128,135 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
     end
   end
 
+  # --- playback controls ---
+
+  describe "playback controls" do
+    test "TonePlayerHook is mounted when timeline exists", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+      assert html =~ ~s(phx-hook="TonePlayerHook")
+      assert html =~ "tone-player"
+    end
+
+    test "play button renders when timeline is loaded", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+      assert html =~ ~s(phx-click="play")
+    end
+
+    test "stop button renders when timeline is loaded", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+      assert html =~ ~s(phx-click="stop")
+    end
+
+    test "speed buttons render for all speed options", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+
+      for speed <- ["0.5", "0.75", "1.0", "1.5", "2.0"] do
+        assert html =~ ~s(phx-value-speed="#{speed}")
+      end
+    end
+
+    test "default speed 1x is highlighted as primary", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+      assert html =~ "1x"
+    end
+
+    test "controls not rendered when no timeline", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+      refute html =~ "tone-player"
+    end
+  end
+
+  # --- playback events ---
+
+  describe "stop event" do
+    test "resets is_playing to false", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      view |> element("button[phx-click='stop']") |> render_click()
+
+      refute render(view) =~ ~s(phx-click="pause")
+      assert render(view) =~ ~s(phx-click="play")
+    end
+  end
+
+  describe "set_speed event" do
+    test "highlights selected speed button", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      html = view |> element("button[phx-value-speed='0.5']") |> render_click()
+
+      assert html =~ "0.5x"
+    end
+  end
+
+  # --- hook-originated events ---
+
+  describe "tone_stopped event" do
+    test "resets playing state", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      render_hook(view, "tone_stopped", %{})
+
+      assert render(view) =~ "Bartolito"
+    end
+  end
+
+  describe "tone_note_on event" do
+    test "does not crash the LiveView", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      render_hook(view, "tone_note_on", %{"index" => 0, "color_key" => "#FF4444"})
+
+      assert render(view) =~ "Bartolito"
+    end
+  end
+
+  # --- select_song event ---
+
   describe "select_song event" do
     test "navigates to song page", %{conn: conn} do
       song = insert_song(%{title: "Los Pollitos"})
@@ -99,6 +270,8 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
       assert_patch(view, ~p"/songs/#{song.id}")
     end
   end
+
+  # --- select_version event ---
 
   describe "select_version event" do
     test "highlights selected version button", %{conn: conn} do
@@ -121,6 +294,8 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
       assert html =~ "bg-primary"
     end
   end
+
+  # --- score_loaded event ---
 
   describe "score_loaded event" do
     test "shows note count after hook confirms render", %{conn: conn} do
