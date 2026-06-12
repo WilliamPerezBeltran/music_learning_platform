@@ -1,10 +1,15 @@
 defmodule MusicLearningPlatform.Application.Playback.AudioSync do
+  def build_load_events_payload(state, bpm_base) do
+    %{
+      base_bpm: bpm_base,
+      events: serialize_events(state.events)
+    }
+  end
+
   def build_play_payload(state, bpm_base) do
     %{
       bpm: Float.round(bpm_base * state.speed, 2),
-      speed: state.speed,
-      current_time: state.current_time,
-      events: serialize_events(state.events)
+      current_time: state.current_time
     }
   end
 
@@ -14,13 +19,8 @@ defmodule MusicLearningPlatform.Application.Playback.AudioSync do
 
   def build_stop_payload, do: %{}
 
-  def build_tempo_payload(state, bpm_base) do
-    %{
-      bpm: Float.round(bpm_base * state.speed, 2),
-      speed: state.speed,
-      current_time: state.current_time,
-      events: serialize_events(state.events)
-    }
+  def build_set_speed_payload(state, bpm_base) do
+    %{bpm: Float.round(bpm_base * state.speed, 2)}
   end
 
   defp serialize_events(events) do

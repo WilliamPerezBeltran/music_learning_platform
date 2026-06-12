@@ -1,5 +1,17 @@
 import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
 
+// Order: C, D, E, F, G, A, B, rest
+const NOTE_COLOR_SET = [
+  "#FF4444",
+  "#FF8C00",
+  "#FFD700",
+  "#32CD32",
+  "#1E90FF",
+  "#8A2BE2",
+  "#FF69B4",
+  "#888888",
+]
+
 const OsmdHook = {
   mounted() {
     this.osmd = null
@@ -16,39 +28,19 @@ const OsmdHook = {
         drawTitle: true,
         drawSubtitle: false,
         drawComposer: false,
+        coloringEnabled: true,
+        coloringMode: 2,
+        coloringSetCustom: NOTE_COLOR_SET,
       })
     }
-    await this.osmd.load(musicxml)
-    this.osmd.render()
-    this.applyNoteColors()
-    this.pushEvent("score_loaded", { total_notes: this.countNotes() })
-  },
 
-  applyNoteColors() {
-    if (!this.osmd || !this.osmd.GraphicSheet) return
-
-    const noteColorMap = {
-      "C": "#FF4444", "D": "#FF8C00", "E": "#FFD700",
-      "F": "#32CD32", "G": "#1E90FF", "A": "#8A2BE2", "B": "#FF69B4",
+    try {
+      await this.osmd.load(musicxml)
+      this.osmd.render()
+      this.pushEvent("score_loaded", { total_notes: this.countNotes() })
+    } catch (e) {
+      console.error("OSMD load error:", e)
     }
-
-    this.osmd.GraphicSheet.MeasureList.forEach(measures => {
-      measures.forEach(measure => {
-        if (!measure) return
-        measure.staffEntries.forEach(entry => {
-          entry.graphicalVoiceEntries.forEach(voiceEntry => {
-            voiceEntry.notes.forEach(gNote => {
-              const step = gNote.sourceNote?.pitch?.step
-              if (!step) return
-              const color = noteColorMap[step] || "#333333"
-              if (gNote.noteHead) {
-                gNote.noteHead.style = `fill: ${color}`
-              }
-            })
-          })
-        })
-      })
-    })
   },
 
   highlightNote(index, color_key) {
@@ -56,7 +48,7 @@ const OsmdHook = {
     const els = this.el.querySelectorAll(
       `g[data-note-index="${index}"] path, g[data-note-index="${index}"] ellipse`
     )
-    els.forEach(el => {
+    els.forEach((el) => {
       el.dataset.origFill = el.style.fill
       el.style.fill = color_key
       el.classList.add("note-active")
@@ -65,7 +57,7 @@ const OsmdHook = {
   },
 
   clearHighlight() {
-    this.activeNoteEls.forEach(el => {
+    this.activeNoteEls.forEach((el) => {
       el.style.fill = el.dataset.origFill || ""
       el.classList.remove("note-active")
     })
@@ -73,13 +65,15 @@ const OsmdHook = {
   },
 
   countNotes() {
-    if (!this.osmd || !this.osmd.GraphicSheet) return 0
+    if (!this.osmd?.Sheet) return 0
     let count = 0
-    this.osmd.GraphicSheet.MeasureList.forEach(measures => {
-      measures.forEach(measure => {
-        if (!measure) return
-        measure.staffEntries.forEach(entry => {
-          entry.graphicalVoiceEntries.forEach(ve => { count += ve.notes.length })
+    this.osmd.Sheet.SourceMeasures.forEach((measure) => {
+      measure.VerticalSourceStaffEntryContainers.forEach((container) => {
+        container.StaffEntries.forEach((staffEntry) => {
+          if (!staffEntry) return
+          staffEntry.VoiceEntries.forEach((voiceEntry) => {
+            count += voiceEntry.Notes.filter((n) => n.Pitch).length
+          })
         })
       })
     })

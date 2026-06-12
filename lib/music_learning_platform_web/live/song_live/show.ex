@@ -45,7 +45,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       |> assign(:is_playing, false)
       |> assign(:current_time, 0.0)
       |> assign(:timeline_loaded, false)
-      |> push_event("tone_stop", %{})
+      |> push_event("stop", %{})
 
     socket =
       if first_version do
@@ -79,7 +79,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       |> assign(:is_playing, false)
       |> assign(:current_time, 0.0)
       |> assign(:timeline_loaded, false)
-      |> push_event("tone_stop", %{})
+      |> push_event("stop", %{})
       |> push_musicxml(version_id)
       |> init_playback_session(socket.assigns.selected_song.id, version_id)
 
@@ -110,7 +110,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
     case MusicLearning.play(session_id) do
       {:ok, state} ->
         payload = AudioSync.build_play_payload(state, socket.assigns.bpm)
-        {:noreply, socket |> assign(:is_playing, true) |> push_event("tone_play", payload)}
+        {:noreply, socket |> assign(:is_playing, true) |> push_event("play", payload)}
 
       {:error, _} ->
         {:noreply, socket}
@@ -123,7 +123,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
     case MusicLearning.pause(session_id) do
       {:ok, state} ->
         payload = AudioSync.build_pause_payload(state)
-        {:noreply, socket |> assign(:is_playing, false) |> push_event("tone_pause", payload)}
+        {:noreply, socket |> assign(:is_playing, false) |> push_event("pause", payload)}
 
       {:error, _} ->
         {:noreply, socket}
@@ -137,7 +137,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       socket
       |> assign(:is_playing, false)
       |> assign(:current_time, 0.0)
-      |> push_event("tone_stop", AudioSync.build_stop_payload())
+      |> push_event("stop", AudioSync.build_stop_payload())
 
     {:noreply, socket}
   end
@@ -148,8 +148,8 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
 
     case MusicLearning.set_speed(session_id, speed) do
       {:ok, state} ->
-        payload = AudioSync.build_tempo_payload(state, socket.assigns.bpm)
-        {:noreply, socket |> assign(:speed, speed) |> push_event("tone_set_tempo", payload)}
+        payload = AudioSync.build_set_speed_payload(state, socket.assigns.bpm)
+        {:noreply, socket |> assign(:speed, speed) |> push_event("set_speed", payload)}
 
       {:error, _} ->
         {:noreply, socket}
@@ -158,12 +158,8 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
 
   # --- Tone.js → LiveView callbacks ---
 
-  def handle_event("tone_note_on", %{"index" => index, "color_key" => color_key}, socket) do
+  def handle_event("note_active", %{"index" => index, "color_key" => color_key}, socket) do
     {:noreply, push_event(socket, "highlight_note", %{index: index, color_key: color_key})}
-  end
-
-  def handle_event("tone_stopped", _, socket) do
-    {:noreply, assign(socket, is_playing: false, current_time: 0.0)}
   end
 
   # --- Private helpers ---
@@ -178,15 +174,15 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
   defp init_playback_session(socket, song_id, version_id) do
     session_id = socket.assigns.session_id
 
-    case MusicLearning.init_session(session_id, song_id, version_id) do
-      {:ok, _} ->
-        case MusicLearning.get_timeline_for_version(version_id) do
-          {:ok, timeline} -> assign(socket, timeline_loaded: true, bpm: timeline.bpm)
-          _ -> socket
-        end
+    with {:ok, state} <- MusicLearning.init_session(session_id, song_id, version_id),
+         {:ok, timeline} <- MusicLearning.get_timeline_for_version(version_id) do
+      payload = AudioSync.build_load_events_payload(state, timeline.bpm)
 
-      _ ->
-        socket
+      socket
+      |> assign(timeline_loaded: true, bpm: timeline.bpm)
+      |> push_event("load_events", payload)
+    else
+      _ -> socket
     end
   end
 

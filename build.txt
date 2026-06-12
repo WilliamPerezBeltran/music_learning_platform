@@ -226,6 +226,42 @@ En resumen:
 
 no se hizo nada con respecto a los colores , se hace despues. 
 ============================================================================================================
+
+
+
+114 tests, 0 failures. Archivos modificados:
+
+- assets/js/tone_player_hook.js — arquitectura separada: loadEvents programa notas en Transport, play solo arranca, setSpeed actualiza BPM y reprograma; usa Tone.Synth (monofónico); _schedule(speed) centraliza la programación con Tone.Transport.schedule
+- lib/.../playback/audio_sync.ex — build_load_events_payload/2 (nuevo), build_play_payload simplificado (solo bpm + current_time), build_set_speed_payload/2 (renombrado)
+- show.ex — init_playback_session ahora pushea load_events al hook; eventos renombrados: play, pause, stop, set_speed; callback note_active reemplaza tone_note_on
+- Tests — actualizados para reflejar la nueva API de audio_sync.ex
+
+
+La app puede mostrar una lista de canciones almacenadas en base de datos y renderizar su partitura completa en el navegador usando OpenSheetMusicDisplay. Al seleccionar una canción, el MusicXML se lee desde el servidor y se envía al hook JavaScript que lo procesa y genera un SVG interactivo a ancho completo. Las notas de la partitura se colorean según su pitch: Do rojo, Re naranja, Mi amarillo, Fa verde, Sol azul, La morado, Si rosa. La partitura ocupa el ancho completo del viewport en cualquier tamaño de pantalla.
+
+La app puede reproducir audio de las canciones directamente en el navegador usando Tone.js con un sintetizador básico de onda triangular. La arquitectura separa la carga de eventos del inicio de la reproducción: cuando se selecciona una canción, los eventos musicales se envían al hook una sola vez via `load_events` y se programan en el Transport. Al dar Play, el servidor solo envía el BPM y la posición actual — no reenvía todos los eventos.
+
+El usuario puede pausar y retomar desde la posición exacta donde se detuvo, o detener y volver al inicio. Al cambiar de canción o de versión mientras se está reproduciendo, el audio se detiene automáticamente y se cargan los nuevos eventos.
+
+La app soporta control de velocidad en cinco pasos: 0.5x, 0.75x, 1x, 1.5x y 2x. Al cambiar la velocidad el hook recalcula los tiempos de todas las notas en el Transport y si el audio estaba sonando retoma desde la misma posición musical a la nueva velocidad. La velocidad activa se resalta visualmente en la barra de controles.
+
+Cada nota que suena en Tone.js notifica al LiveView via `note_active`, y el LiveView reenvía un evento `highlight_note` al hook OSMD para resaltar la nota activa en la partitura. Sin embargo, el resaltado dinámico aún no funciona completamente porque OSMD no genera el atributo `data-note-index` en los elementos SVG que el selector del hook necesita para encontrar la nota correcta.
+
+La interfaz es completamente responsive: en mobile el sidebar se oculta y se abre con un botón hamburguesa sobre un overlay; en tablet y desktop el sidebar es fijo y siempre visible. El layout usa `min-h-dvh` para evitar recortes en browsers mobile.
+
+
+
+Lo que funciona actualmente:
+
+La app es un reproductor de partituras para aprender piano. Al abrir /songs/1 puedes ver la partitura de Bartolito renderizada con notas coloreadas por pitch (C=rojo, D=naranja, E=amarillo, F=verde, G=azul, A=morado, B=rosa). Desde la barra de controles puedes dar play y escuchar la melodía sintetizada con Tone.js, pausar y continuar desde donde se quedó, detener y volver al inicio, y cambiar la velocidad de reproducción (0.5x, 0.75x, 1x, 1.5x, 2x). En el sidebar puedes cambiar entre canciones y versiones. El contador de notas aparece en el header una vez carga la partitura.
+
+Lo que NO funciona:
+
+El highlight de la nota activa durante la reproducción — cuando suena una nota, no se ilumina visualmente en la partitura. El sistema de señales existe (Tone.js → note_active → LiveView → highlight_note → OsmdHook) pero el selector g[data-note-index] no encuentra elementos porque OSMD no genera esos atributos en el SVG.
+
+Fases completadas: 0.1 → 0.4, parcialmente 0.5, 0.6, 0.7, 0.8, 0.9.
+
+✻ Churned for 6s
 ============================================================================================================
 ============================================================================================================
 ============================================================================================================
