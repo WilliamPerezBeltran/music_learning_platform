@@ -2,20 +2,30 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
   use MusicLearningPlatformWeb, :live_view
 
   alias MusicLearningPlatform.MusicLearning
+  alias MusicLearningPlatform.Application.Playback.AudioSync
+
+  @speeds [0.5, 0.75, 1.0, 1.5, 2.0]
 
   @impl true
   def mount(_params, _session, socket) do
-    songs = MusicLearning.list_songs()
+    session_id = "session_#{System.unique_integer([:positive])}"
 
     socket =
       socket
-      |> assign(:songs, songs)
+      |> assign(:songs, MusicLearning.list_songs())
       |> assign(:selected_song, nil)
       |> assign(:selected_version, nil)
       |> assign(:versions, [])
       |> assign(:score_loaded, false)
       |> assign(:total_notes, 0)
       |> assign(:sidebar_open, false)
+      |> assign(:session_id, session_id)
+      |> assign(:is_playing, false)
+      |> assign(:speed, 1.0)
+      |> assign(:current_time, 0.0)
+      |> assign(:bpm, 120.0)
+      |> assign(:timeline_loaded, false)
+      |> assign(:speeds, @speeds)
 
     {:ok, socket}
   end
@@ -32,10 +42,16 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       |> assign(:versions, versions)
       |> assign(:selected_version, first_version)
       |> assign(:score_loaded, false)
+      |> assign(:is_playing, false)
+      |> assign(:current_time, 0.0)
+      |> assign(:timeline_loaded, false)
+      |> push_event("tone_stop", %{})
 
     socket =
       if first_version do
-        push_musicxml(socket, first_version.id)
+        socket
+        |> push_musicxml(first_version.id)
+        |> init_playback_session(song.id, first_version.id)
       else
         socket
       end
@@ -44,6 +60,8 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
   end
 
   def handle_params(_params, _uri, socket), do: {:noreply, socket}
+
+  # --- Song / version selection ---
 
   @impl true
   def handle_event("select_song", %{"id" => id}, socket) do
@@ -58,14 +76,23 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
       socket
       |> assign(:selected_version, version)
       |> assign(:score_loaded, false)
+      |> assign(:is_playing, false)
+      |> assign(:current_time, 0.0)
+      |> assign(:timeline_loaded, false)
+      |> push_event("tone_stop", %{})
       |> push_musicxml(version_id)
+      |> init_playback_session(socket.assigns.selected_song.id, version_id)
 
     {:noreply, socket}
   end
 
+  # --- OSMD events ---
+
   def handle_event("score_loaded", %{"total_notes" => total}, socket) do
     {:noreply, assign(socket, score_loaded: true, total_notes: total)}
   end
+
+  # --- Sidebar ---
 
   def handle_event("toggle_sidebar", _params, socket) do
     {:noreply, assign(socket, sidebar_open: !socket.assigns.sidebar_open)}
@@ -75,6 +102,72 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
     {:noreply, assign(socket, sidebar_open: false)}
   end
 
+  # --- Playback controls ---
+
+  def handle_event("play", _, socket) do
+    session_id = socket.assigns.session_id
+
+    case MusicLearning.play(session_id) do
+      {:ok, state} ->
+        payload = AudioSync.build_play_payload(state, socket.assigns.bpm)
+        {:noreply, socket |> assign(:is_playing, true) |> push_event("tone_play", payload)}
+
+      {:error, _} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("pause", _, socket) do
+    session_id = socket.assigns.session_id
+
+    case MusicLearning.pause(session_id) do
+      {:ok, state} ->
+        payload = AudioSync.build_pause_payload(state)
+        {:noreply, socket |> assign(:is_playing, false) |> push_event("tone_pause", payload)}
+
+      {:error, _} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("stop", _, socket) do
+    MusicLearning.stop(socket.assigns.session_id)
+
+    socket =
+      socket
+      |> assign(:is_playing, false)
+      |> assign(:current_time, 0.0)
+      |> push_event("tone_stop", AudioSync.build_stop_payload())
+
+    {:noreply, socket}
+  end
+
+  def handle_event("set_speed", %{"speed" => speed_str}, socket) do
+    speed = parse_speed(speed_str)
+    session_id = socket.assigns.session_id
+
+    case MusicLearning.set_speed(session_id, speed) do
+      {:ok, state} ->
+        payload = AudioSync.build_tempo_payload(state, socket.assigns.bpm)
+        {:noreply, socket |> assign(:speed, speed) |> push_event("tone_set_tempo", payload)}
+
+      {:error, _} ->
+        {:noreply, socket}
+    end
+  end
+
+  # --- Tone.js → LiveView callbacks ---
+
+  def handle_event("tone_note_on", %{"index" => index, "color_key" => color_key}, socket) do
+    {:noreply, push_event(socket, "highlight_note", %{index: index, color_key: color_key})}
+  end
+
+  def handle_event("tone_stopped", _, socket) do
+    {:noreply, assign(socket, is_playing: false, current_time: 0.0)}
+  end
+
+  # --- Private helpers ---
+
   defp push_musicxml(socket, version_id) do
     case MusicLearning.get_musicxml_content(version_id) do
       {:ok, content} -> push_event(socket, "load_score", %{musicxml: content})
@@ -82,13 +175,36 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
     end
   end
 
+  defp init_playback_session(socket, song_id, version_id) do
+    session_id = socket.assigns.session_id
+
+    case MusicLearning.init_session(session_id, song_id, version_id) do
+      {:ok, _} ->
+        case MusicLearning.get_timeline_for_version(version_id) do
+          {:ok, timeline} -> assign(socket, timeline_loaded: true, bpm: timeline.bpm)
+          _ -> socket
+        end
+
+      _ ->
+        socket
+    end
+  end
+
+  defp parse_speed(s) do
+    case Float.parse(s) do
+      {f, _} -> f
+      :error -> 1.0
+    end
+  end
+
+  # --- Render ---
+
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.player flash={@flash}>
-      <%!-- min-h-dvh usa dvh en browsers modernos (evita el recorte del browser en mobile) --%>
       <div class="flex flex-col md:flex-row min-h-dvh">
-        <%!-- Overlay mobile cuando sidebar abierto --%>
+        <%!-- Overlay mobile --%>
         <%= if @sidebar_open do %>
           <div
             id="sidebar-overlay"
@@ -149,7 +265,6 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
         <main class="flex-1 flex flex-col min-w-0">
           <%!-- Header --%>
           <div class="shrink-0 border-b border-base-300 px-3 sm:px-6 py-3 flex items-center gap-3">
-            <%!-- Botón hamburguesa — solo en mobile --%>
             <button
               id="sidebar-toggle"
               class="md:hidden btn btn-ghost btn-sm"
@@ -193,8 +308,43 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
             <% end %>
           </div>
 
+          <%!-- Playback controls (visible when timeline is loaded) --%>
+          <%= if @selected_song && @timeline_loaded do %>
+            <div
+              id="tone-player"
+              phx-hook="TonePlayerHook"
+              class="shrink-0 flex items-center gap-2 px-3 sm:px-6 py-2 border-b border-base-300 bg-base-200/50"
+            >
+              <%= if @is_playing do %>
+                <button phx-click="pause" class="btn btn-sm btn-ghost" aria-label="Pausar">
+                  <.icon name="hero-pause" class="w-5 h-5" />
+                </button>
+              <% else %>
+                <button phx-click="play" class="btn btn-sm btn-primary" aria-label="Reproducir">
+                  <.icon name="hero-play" class="w-5 h-5" />
+                </button>
+              <% end %>
+
+              <button phx-click="stop" class="btn btn-sm btn-ghost" aria-label="Detener">
+                <.icon name="hero-stop" class="w-5 h-5" />
+              </button>
+
+              <div class="ml-auto flex items-center gap-1">
+                <%= for s <- @speeds do %>
+                  <button
+                    phx-click="set_speed"
+                    phx-value-speed={s}
+                    class={["btn btn-xs", if(@speed == s, do: "btn-primary", else: "btn-ghost")]}
+                  >
+                    {speed_label(s)}
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
           <%!-- Score --%>
-          <div class="flex-1 overflow-auto p-2 sm:p-4 bg-white dark:bg-base-100">
+          <div class="flex-1 p-2 sm:p-4 bg-white dark:bg-base-100">
             <%= if @selected_song do %>
               <div
                 id="score-container"
@@ -214,4 +364,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
     </Layouts.player>
     """
   end
+
+  defp speed_label(1.0), do: "1x"
+  defp speed_label(s), do: "#{s}x"
 end
