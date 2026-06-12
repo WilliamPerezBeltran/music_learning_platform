@@ -3,6 +3,8 @@ defmodule MusicLearningPlatform.Application.Sync.NoteTrackerTest do
 
   alias MusicLearningPlatform.Application.Sync.NoteTracker
 
+  defp unique_session, do: "test_session_#{System.unique_integer([:positive])}"
+
   defp events do
     [
       %{index: 0, pitch: "C4", start_time: 0.0, end_time: 0.5, voice: "melody"},
@@ -10,6 +12,58 @@ defmodule MusicLearningPlatform.Application.Sync.NoteTrackerTest do
       %{index: 2, pitch: "E4", start_time: 1.0, end_time: 1.5, voice: "melody"},
       %{index: 3, pitch: "F4", start_time: 2.0, end_time: 2.5, voice: "melody"}
     ]
+  end
+
+  describe "set_active/2 and get_active/1" do
+    test "stores and retrieves an active note index" do
+      session = unique_session()
+      NoteTracker.set_active(session, 5)
+      assert {:ok, 5} = NoteTracker.get_active(session)
+    end
+
+    test "overwrites the previous active index" do
+      session = unique_session()
+      NoteTracker.set_active(session, 0)
+      NoteTracker.set_active(session, 7)
+      assert {:ok, 7} = NoteTracker.get_active(session)
+    end
+
+    test "returns error when no active note is set" do
+      session = unique_session()
+      assert {:error, :no_active_note} = NoteTracker.get_active(session)
+    end
+
+    test "sessions are isolated from each other" do
+      s1 = unique_session()
+      s2 = unique_session()
+      NoteTracker.set_active(s1, 3)
+      NoteTracker.set_active(s2, 9)
+      assert {:ok, 3} = NoteTracker.get_active(s1)
+      assert {:ok, 9} = NoteTracker.get_active(s2)
+    end
+  end
+
+  describe "reset/1" do
+    test "clears the active note for a session" do
+      session = unique_session()
+      NoteTracker.set_active(session, 2)
+      NoteTracker.reset(session)
+      assert {:error, :no_active_note} = NoteTracker.get_active(session)
+    end
+
+    test "is a no-op when session has no active note" do
+      session = unique_session()
+      assert :ok = NoteTracker.reset(session)
+    end
+  end
+
+  describe "seek/3" do
+    test "resets active note on seek" do
+      session = unique_session()
+      NoteTracker.set_active(session, 4)
+      NoteTracker.seek(session, 1.0, events())
+      assert {:error, :no_active_note} = NoteTracker.get_active(session)
+    end
   end
 
   describe "get_active_events/3" do
