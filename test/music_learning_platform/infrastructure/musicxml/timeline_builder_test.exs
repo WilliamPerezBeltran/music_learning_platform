@@ -51,7 +51,7 @@ defmodule MusicLearningPlatform.Infrastructure.MusicXML.TimelineBuilderTest do
       version = insert_version()
       {:ok, %{events: events}} = TimelineBuilder.build_from_parsed(version.id, parsed_data())
       c_event = Enum.find(events, &(&1.pitch == "C4"))
-      assert c_event.color_key == "#FF4444"
+      assert c_event.color_key == "do"
     end
   end
 

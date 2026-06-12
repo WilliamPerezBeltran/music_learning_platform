@@ -296,4 +296,48 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
       assert render(view) =~ "42 notas"
     end
   end
+
+  # --- toggle_colors event ---
+
+  describe "toggle_colors event" do
+    test "color toggle button renders in controls bar", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, _view, html} = live(conn, ~p"/songs/#{song.id}")
+
+      assert html =~ ~s(phx-click="toggle_colors")
+    end
+
+    test "disables colors when toggled off", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, view, html} = live(conn, ~p"/songs/#{song.id}")
+
+      assert html =~ "btn-primary"
+
+      html = view |> element("button[phx-click='toggle_colors']") |> render_click()
+
+      refute html =~ ~r/phx-click="toggle_colors"[^>]*btn-primary/
+    end
+
+    test "re-enables colors when toggled twice", %{conn: conn} do
+      song = insert_song()
+      version = insert_version(song)
+      timeline = insert_timeline(version)
+      insert_event(timeline)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      view |> element("button[phx-click='toggle_colors']") |> render_click()
+      html = view |> element("button[phx-click='toggle_colors']") |> render_click()
+
+      assert html =~ "btn-primary"
+    end
+  end
 end
