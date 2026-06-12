@@ -3,88 +3,118 @@ import * as Tone from "tone"
 const TonePlayerHook = {
   mounted() {
     this.synth = null
-    this.part = null
-    this.notes = []
+    this.rawEvents = []
+    this.baseBpm = 120
+    this.currentSpeed = 1.0
+    this.baseTimeAtPause = 0.0
 
-    this.handleEvent("tone_play", (payload) => this.play(payload))
-    this.handleEvent("tone_pause", (payload) => this.pause(payload))
-    this.handleEvent("tone_stop", () => this.stop())
-    this.handleEvent("tone_set_tempo", (payload) => this.setTempo(payload))
+    this.handleEvent("load_events", (payload) => this.loadEvents(payload))
+    this.handleEvent("play", (payload) => this.play(payload))
+    this.handleEvent("pause", () => this.pause())
+    this.handleEvent("stop", () => this.stop())
+    this.handleEvent("set_speed", (payload) => this.setSpeed(payload))
   },
 
   destroyed() {
     this.cleanup()
   },
 
-  initSynth() {
+  // --- Event handlers ---
+
+  loadEvents({ events, base_bpm }) {
+    this.rawEvents = events
+    this.baseBpm = base_bpm
+    this._schedule(this.currentSpeed)
+  },
+
+  async play({ current_time, bpm }) {
+    await Tone.start()
+    this._initSynth()
+
+    const speed = bpm / this.baseBpm
+    this.currentSpeed = speed
+
+    const transport = Tone.getTransport()
+    transport.bpm.value = bpm
+
+    // Cancel previously scheduled events and reschedule at current speed
+    this._schedule(speed)
+
+    // Convert base time to transport time: transport runs `speed` times faster
+    const offset = current_time / speed
+    transport.start("+0.1", offset)
+  },
+
+  pause() {
+    const transport = Tone.getTransport()
+    // Record base time so resume can seek back to the right position
+    this.baseTimeAtPause = transport.seconds * this.currentSpeed
+    transport.pause()
+  },
+
+  stop() {
+    const transport = Tone.getTransport()
+    transport.stop()
+    transport.cancel()
+    this.baseTimeAtPause = 0.0
+  },
+
+  setSpeed({ bpm }) {
+    const newSpeed = bpm / this.baseBpm
+    const transport = Tone.getTransport()
+    const wasPlaying = transport.state === "started"
+
+    // Capture current base position before stopping
+    const baseTime = wasPlaying
+      ? transport.seconds * this.currentSpeed
+      : this.baseTimeAtPause
+
+    this.currentSpeed = newSpeed
+    transport.bpm.value = bpm
+
+    // Reschedule events with new speed scaling
+    this._schedule(newSpeed)
+
+    if (wasPlaying) {
+      transport.start("+0.1", baseTime / newSpeed)
+    }
+  },
+
+  // --- Private ---
+
+  _initSynth() {
     if (!this.synth) {
-      this.synth = new Tone.PolySynth(Tone.Synth, {
-        maxPolyphony: 16,
+      this.synth = new Tone.Synth({
         oscillator: { type: "triangle" },
         envelope: { attack: 0.02, decay: 0.1, sustain: 0.5, release: 0.4 },
       }).toDestination()
     }
   },
 
-  async play({ bpm, speed, current_time, events }) {
-    await Tone.start()
+  _schedule(speed) {
+    Tone.getTransport().cancel()
 
-    this.initSynth()
-    this.cleanup()
+    this.rawEvents.forEach((event) => {
+      const transportTime = event.start_time / speed
+      const transportDuration = Math.max(event.duration / speed - 0.02, 0.05)
 
-    this.notes = events
-
-    // Schedule notes scaled by speed factor
-    // start_times are in seconds at base BPM (1x speed)
-    const scheduled = events.map((e) => ({
-      time: e.start_time / speed,
-      pitch: e.pitch,
-      duration: Math.max(e.duration / speed - 0.02, 0.05),
-      index: e.index,
-      color_key: e.color_key,
-    }))
-
-    this.part = new Tone.Part((time, note) => {
-      this.synth.triggerAttackRelease(note.pitch, note.duration, time)
-      Tone.getDraw().schedule(() => {
-        this.pushEvent("tone_note_on", { index: note.index, color_key: note.color_key })
-      }, time)
-    }, scheduled)
-
-    this.part.start(0)
-
-    const offset = current_time / speed
-    Tone.getTransport().start("+0.1", offset)
-  },
-
-  pause({ current_time }) {
-    Tone.getTransport().pause()
-  },
-
-  stop() {
-    const transport = Tone.getTransport()
-    transport.stop()
-    transport.position = 0
-    if (this.part) {
-      this.part.dispose()
-      this.part = null
-    }
-    this.pushEvent("tone_stopped", {})
-  },
-
-  setTempo({ bpm, speed, current_time, events }) {
-    if (events && events.length > 0) {
-      this.play({ bpm, speed, current_time, events })
-    }
+      Tone.getTransport().schedule((time) => {
+        this.synth.triggerAttackRelease(event.pitch, transportDuration, time)
+        Tone.getDraw().schedule(() => {
+          this.pushEvent("note_active", { index: event.index, color_key: event.color_key })
+        }, time)
+      }, transportTime)
+    })
   },
 
   cleanup() {
-    if (this.part) {
-      this.part.dispose()
-      this.part = null
+    const transport = Tone.getTransport()
+    transport.stop()
+    transport.cancel()
+    if (this.synth) {
+      this.synth.dispose()
+      this.synth = null
     }
-    Tone.getTransport().stop()
-    Tone.getTransport().position = 0
   },
 }
 

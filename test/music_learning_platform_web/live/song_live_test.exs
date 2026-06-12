@@ -229,27 +229,14 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
 
   # --- hook-originated events ---
 
-  describe "tone_stopped event" do
-    test "resets playing state", %{conn: conn} do
-      song = insert_song()
-      insert_version(song)
-
-      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
-
-      render_hook(view, "tone_stopped", %{})
-
-      assert render(view) =~ "Bartolito"
-    end
-  end
-
-  describe "tone_note_on event" do
+  describe "note_active event" do
     test "does not crash the LiveView", %{conn: conn} do
       song = insert_song()
       insert_version(song)
 
       {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
 
-      render_hook(view, "tone_note_on", %{"index" => 0, "color_key" => "#FF4444"})
+      render_hook(view, "note_active", %{"index" => 0, "color_key" => "#FF4444"})
 
       assert render(view) =~ "Bartolito"
     end
