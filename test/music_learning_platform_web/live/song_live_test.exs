@@ -230,13 +230,80 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
   # --- hook-originated events ---
 
   describe "note_active event" do
-    test "does not crash the LiveView", %{conn: conn} do
+    test "does not crash with semantic color_key format", %{conn: conn} do
       song = insert_song()
       insert_version(song)
 
       {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
 
-      render_hook(view, "note_active", %{"index" => 0, "color_key" => "#FF4444"})
+      render_hook(view, "note_active", %{"index" => 0, "color_key" => "do", "current_time" => 0.5})
+
+      assert render(view) =~ "Bartolito"
+    end
+
+    test "does not crash with legacy hex color_key format", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      render_hook(view, "note_active", %{
+        "index" => 0,
+        "color_key" => "#FF4444",
+        "current_time" => 0.5
+      })
+
+      assert render(view) =~ "Bartolito"
+    end
+
+    test "does not crash with index zero", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      render_hook(view, "note_active", %{
+        "index" => 0,
+        "color_key" => "#1E90FF",
+        "current_time" => 0.0
+      })
+
+      assert render(view) =~ "Bartolito"
+    end
+
+    test "does not crash with large note index", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      render_hook(view, "note_active", %{
+        "index" => 999,
+        "color_key" => "#8A2BE2",
+        "current_time" => 30.0
+      })
+
+      assert render(view) =~ "Bartolito"
+    end
+
+    test "accepts all legacy hex color formats from old DB seed", %{conn: conn} do
+      song = insert_song()
+      insert_version(song)
+
+      {:ok, view, _html} = live(conn, ~p"/songs/#{song.id}")
+
+      for {color_key, time} <- [
+            {"#FF4444", 0.0},
+            {"#1E90FF", 0.5},
+            {"#8A2BE2", 1.0},
+            {"#32CD32", 1.5}
+          ] do
+        render_hook(view, "note_active", %{
+          "index" => 0,
+          "color_key" => color_key,
+          "current_time" => time
+        })
+      end
 
       assert render(view) =~ "Bartolito"
     end

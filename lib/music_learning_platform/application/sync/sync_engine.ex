@@ -27,6 +27,13 @@ defmodule MusicLearningPlatform.Application.Sync.SyncEngine do
     end
   end
 
+  # Called when Tone.js reports a note playing — updates position + active note tracker
+  def note_active(session_id, note_index, current_time) do
+    NoteTracker.set_active(session_id, note_index)
+    StateModel.set_position(session_id, current_time)
+    :ok
+  end
+
   def tick(session_id, current_time) do
     with {:ok, state} <- StateModel.get_state(session_id) do
       active_events = NoteTracker.get_active_events(session_id, current_time, state.events)

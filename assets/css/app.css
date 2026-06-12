@@ -114,8 +114,8 @@
 .note-si  { fill: #FF69B4; }
 
 .note-active {
-  filter: brightness(1.4) drop-shadow(0 0 4px currentColor);
-  transition: filter 0.1s ease;
+  filter: drop-shadow(0 0 5px var(--note-highlight-color, #FFD700))
+          brightness(1.6) !important;
 }
 
 .colors-disabled path,
