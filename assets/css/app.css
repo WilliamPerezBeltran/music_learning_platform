@@ -117,3 +117,9 @@
   filter: brightness(1.4) drop-shadow(0 0 4px currentColor);
   transition: filter 0.1s ease;
 }
+
+.colors-disabled path,
+.colors-disabled ellipse {
+  fill: black !important;
+  stroke: black !important;
+}

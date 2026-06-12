@@ -12,3 +12,11 @@ tree -a -I '_build|deps|node_modules|.elixir_ls|.git|coverage|tmp|priv/static/as
 docker compose exec app mix ecto.migrate
 
 docker compose exec app mix run priv/repo/seeds.exs
+
+docker compose exec app mix assets.build
+
+
+docker compose restart app 
+
+
+ docker compose exec -e MIX_ENV=test app mix test 2>&1 | grep "^\s*[0-9]\+)" | head -10
