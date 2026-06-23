@@ -4,7 +4,9 @@ FROM elixir:1.19.5-otp-28 AS builder
 WORKDIR /app
 
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends build-essential git && \
+    apt-get install -y --no-install-recommends build-essential git curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mix local.hex --force && mix local.rebar --force
@@ -19,6 +21,9 @@ COPY priv priv/
 COPY assets assets/
 COPY lib lib/
 COPY rel rel/
+
+# Install npm dependencies (tone, opensheetmusicdisplay)
+RUN npm install --prefix assets
 
 # Compile first — generates the phoenix-colocated/music_learning_platform
 # JS module that esbuild needs to resolve the import in app.js

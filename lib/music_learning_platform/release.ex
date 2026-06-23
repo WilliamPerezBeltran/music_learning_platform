@@ -25,6 +25,26 @@ defmodule MusicLearningPlatform.Release do
     end
   end
 
+  def reprocess do
+    load_app()
+    alias MusicLearningPlatform.Repo
+    alias MusicLearningPlatform.Domain.Songs.SongVersion
+    alias MusicLearningPlatform.Infrastructure.Workers.MusicXMLWorker
+
+    for repo <- repos() do
+      Ecto.Migrator.with_repo(repo, fn _repo ->
+        SongVersion
+        |> Repo.all()
+        |> Enum.each(fn version ->
+          case MusicXMLWorker.process(version.id, version.musicxml_path) do
+            {:ok, _} -> IO.puts("✓ version #{version.id} procesada")
+            {:error, reason} -> IO.puts("✗ version #{version.id} error: #{inspect(reason)}")
+          end
+        end)
+      end)
+    end
+  end
+
   defp repos, do: Application.fetch_env!(@app, :ecto_repos)
 
   defp load_app, do: Application.load(@app)
