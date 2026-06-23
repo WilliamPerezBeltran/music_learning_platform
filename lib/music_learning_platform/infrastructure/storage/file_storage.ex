@@ -1,5 +1,5 @@
 defmodule MusicLearningPlatform.Infrastructure.Storage.FileStorage do
-  @priv_path "priv/static/songs"
+  defp priv_path, do: Application.app_dir(:music_learning_platform, "priv/static/songs")
 
   def read(path) do
     full_path = resolve_path(path)
@@ -31,5 +31,5 @@ defmodule MusicLearningPlatform.Infrastructure.Storage.FileStorage do
   end
 
   defp resolve_path("/" <> _ = absolute_path), do: absolute_path
-  defp resolve_path(relative_path), do: Path.join([@priv_path, relative_path])
+  defp resolve_path(relative_path), do: Path.join([priv_path(), relative_path])
 end
