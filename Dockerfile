@@ -18,6 +18,7 @@ COPY config config/
 COPY priv priv/
 COPY assets assets/
 COPY lib lib/
+COPY rel rel/
 
 # Compile first — generates the phoenix-colocated/music_learning_platform
 # JS module that esbuild needs to resolve the import in app.js
