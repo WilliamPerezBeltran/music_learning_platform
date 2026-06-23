@@ -1,0 +1,102 @@
+Skip to content
+WilliamPerezBeltran
+music_learning_platform
+Repository navigation
+Code
+Issues
+Pull requests
+1
+ (1)
+Agents
+Actions
+Projects
+Wiki
+Security and quality
+Insights
+Settings
+Add action
+#29
+Open
+WilliamPerezBeltran
+wants to merge 2 commits into
+main
+from
+test-action
++103
+-32
+Lines changed: 103 additions & 32 deletions
+Conversation0 (0)
+Commits2 (2)
+Checks0 (0)
+Files changed3 (3)
+Conversation
+@WilliamPerezBeltran
+WilliamPerezBeltran
+commented
+2 minutes ago
+Owner
+No description provided.
+
+@WilliamPerezBeltran
+Add action
+e378ccb
+@WilliamPerezBeltran
+fix error
+1e9548b
+Merge info
+Some checks haven't completed yet
+1 in progress check
+
+
+in progress checks
+Loading
+CI / Tests (pull_request)
+CI / Tests (pull_request)Started now — This check has started...
+No conflicts with base branch
+Merging can be performed automatically.
+
+You can also merge this with the command line. 
+Still in progress?
+@WilliamPerezBeltran
+
+
+Add a comment
+Comment
+ 
+Add your comment here...
+Remember, contributions to this repository should follow our GitHub Community Guidelines.
+ ProTip! Add .patch or .diff to the end of URLs for Git’s plaintext views.
+Reviewers
+No reviews
+Still in progress?
+Assignees
+No one—
+Labels
+None yet
+Projects
+None yet
+Milestone
+No milestone
+Development
+Successfully merging this pull request may close these issues.
+
+None yet
+
+
+Notifications
+Customize
+You’re not receiving notifications from this thread.
+1 participant
+@WilliamPerezBeltran
+Footer
+© 2026 GitHub, Inc.
+Footer navigation
+Terms
+Privacy
+Security
+Status
+Community
+Docs
+Contact
+Manage cookies
+Do not share my personal information
