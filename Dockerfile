@@ -32,11 +32,11 @@ RUN mix assets.deploy
 RUN MIX_ENV=prod mix do compile + release
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM debian:bookworm-slim AS runtime
+FROM ubuntu:24.04 AS runtime
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
-      libstdc++6 openssl libncurses5 locales ca-certificates && \
+      libstdc++6 openssl libncurses6 locales ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
