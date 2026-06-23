@@ -49,6 +49,6 @@ COPY --from=builder --chown=nobody:root /app/_build/prod/rel/music_learning_plat
 
 USER nobody
 
-EXPOSE 4000
+EXPOSE 8080
 
 CMD ["/app/bin/music_learning_platform", "start"]

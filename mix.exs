@@ -11,7 +11,13 @@ defmodule MusicLearningPlatform.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      releases: [
+        music_learning_platform: [
+          include_executables_for: [:unix],
+          overlays: "rel/overlays"
+        ]
+      ]
     ]
   end
 
