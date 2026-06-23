@@ -83,7 +83,7 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
 
     test "shows placeholder when no song selected", %{conn: conn} do
       {:ok, _view, html} = live(conn, ~p"/songs")
-      assert html =~ "Selecciona una canción"
+      assert html =~ "Elige una canción"
     end
 
     test "playback controls are not rendered without a song", %{conn: conn} do
@@ -345,7 +345,7 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
 
       html = view |> element("#version-btn-#{v2.id}") |> render_click()
 
-      assert html =~ "bg-primary"
+      assert html =~ "active"
     end
   end
 
@@ -386,11 +386,11 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
 
       {:ok, view, html} = live(conn, ~p"/songs/#{song.id}")
 
-      assert html =~ "btn-primary"
+      assert html =~ "active"
 
       html = view |> element("button[phx-click='toggle_colors']") |> render_click()
 
-      refute html =~ ~r/phx-click="toggle_colors"[^>]*btn-primary/
+      refute html =~ ~r/phx-click="toggle_colors"[^>]*\bactive\b/
     end
 
     test "re-enables colors when toggled twice", %{conn: conn} do
@@ -404,7 +404,7 @@ defmodule MusicLearningPlatformWeb.SongLive.ShowTest do
       view |> element("button[phx-click='toggle_colors']") |> render_click()
       html = view |> element("button[phx-click='toggle_colors']") |> render_click()
 
-      assert html =~ "btn-primary"
+      assert html =~ "active"
     end
   end
 end
