@@ -32,16 +32,10 @@ RUN mix assets.deploy
 RUN MIX_ENV=prod mix do compile + release
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM ubuntu:24.04 AS runtime
+FROM elixir:1.19.5-otp-28-slim AS runtime
 
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-      libstdc++6 openssl libncurses6 locales ca-certificates && \
-    rm -rf /var/lib/apt/lists/* && \
-    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
-
-ENV LANG=en_US.UTF-8
-ENV PHX_SERVER=true
+ENV PHX_SERVER=true \
+    LANG=en_US.UTF-8
 
 WORKDIR /app
 RUN chown nobody /app
