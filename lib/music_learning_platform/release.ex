@@ -16,9 +16,13 @@ defmodule MusicLearningPlatform.Release do
 
   def seed do
     load_app()
-    {:ok, _} = Application.ensure_all_started(@app)
     seed_path = Application.app_dir(@app, "priv/repo/seeds.exs")
-    Code.eval_file(seed_path)
+
+    for repo <- repos() do
+      Ecto.Migrator.with_repo(repo, fn _repo ->
+        Code.eval_file(seed_path)
+      end)
+    end
   end
 
   defp repos, do: Application.fetch_env!(@app, :ecto_repos)
