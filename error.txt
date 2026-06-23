@@ -1,0 +1,83 @@
+la situacion es esta 
+la ia hizo git add . y git commit sin mi permiso ahora hay que quitar en cada commit que hizo 
+"Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+pero lo mas importante es que no debe quedar en el historial por ningun lado esto "Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+
+
+DIME QUE TENGO QUE HACER Y NO EJECUTE NADA 
+DIME LO SECUENCIALMENTE 
+
+
+
+git log 
+commit 6ba0237bc70322aa2299d7bbd9901a9d592c8f54 (HEAD -> main)
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 13:22:23 2026 -0500
+
+    fix: use Application.app_dir to resolve MusicXML path in production release
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit f530dca41aa2dea332b395ac779bbaeb5d03ddd7
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 13:13:51 2026 -0500
+
+    fix: seed/0 uses with_repo instead of ensure_all_started to avoid port conflict
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit ad8633bc3be7f29a124156570dbc6d543defd201
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 13:09:28 2026 -0500
+
+    fix: use elixir:1.19.5-otp-28-slim as runtime to match OpenSSL 3.4.0
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit 8cec44156008fee199e886d3bee7749896b5dcc9
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 13:06:11 2026 -0500
+
+    fix: use ubuntu:24.04 runtime to satisfy GLIBC 2.38 requirement of OTP 28
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit bbd4f4f9250b9974dbd70ca4779965e2e40448e6
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 13:01:11 2026 -0500
+
+    fix: copy rel/ into Docker build context for release overlays
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit 8393293344077701d4c7175a7ff09cf8dae95722
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 11:37:06 2026 -0500
+
+    fix: use full binary path in release_command instead of /app/bin/migrate
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit b5724200cd9a0680114d2ac2c7dc968ff30ddc77
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 11:11:14 2026 -0500
+
+    chore: add Fly.io config files and seed function to Release
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit feab51d654c8d62bd1a36b8facf22cfd117a5c45
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 11:07:12 2026 -0500
+
+    fix: include rel/overlays in release so /app/bin/migrate exists on Fly
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+commit 326ce6410cf216ecd2d48dd115e15fcc3c81b21a
+Author: William Pérez <williampbeltranprogramador@gmail.com>
+Date:   Tue Jun 23 10:58:16 2026 -0500
+
+    fix: compile before assets.deploy to generate phoenix-colocated module
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
