@@ -10,7 +10,7 @@ kill_signal = 'SIGTERM'
 [build]
 
 [deploy]
-  release_command = '/app/bin/migrate'
+  release_command = "/app/bin/music_learning_platform eval \"MusicLearningPlatform.Release.migrate\""
 
 [env]
   PHX_HOST = 'music-demo.fly.dev'
