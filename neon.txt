@@ -1,0 +1,57 @@
+Vercel: William Pérez's projects
+Free
+
+All OK
+
+Ask AI
+
+
+Upgrade
+
+W
+Projects
+People
+Billing
+Settings
+Refer a friend
+
+Send a friend your referral link. When they sign up for Neon and spend $5, you get $5 in credits.
+Get referral link
+Feedback
+Collapse menu
+Projects
+
+New project
+
+Import data
+Compute
+0
+CU-hrs
+Storage
+0.03
+GB
+History
+0
+GB
+Network transfer
+0
+GB
+Usage since Jun 1, 2026. Metrics may be delayed by an hour and are not updated for inactive projects. Learn more.
+1 Project
+Search...
+Name
+Region
+Created at
+Storage
+Compute last active at
+Branches
+Integrations
+nextjs-postgres
+AWS US East 1 (N. Virginia)	2 years ago	
+34.42 MB
+2 years ago	
+1
+Add
+
+Passwordless connect with psql:
+psql -h pg.neon.tech
