@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+cd -P -- "$(dirname -- "$0")"
+exec ./music_learning_platform eval MusicLearningPlatform.Release.migrate
