@@ -1,45 +1,394 @@
+Run flyctl deploy --remote-only
+==> Verifying app config
+--> Verified app config
+Validating /home/runner/work/music_learning_platform/music_learning_platform/fly.toml
+✓ Configuration is valid
+==> Building image
+Waiting for depot builder...
 
+==> Building image with Depot
+--> build:  (​)
+#1 [internal] load build definition from Dockerfile
+#1 DONE 0.0s
 
-=================================================
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.55kB 0.2s done
+#1 DONE 0.2s
 
+#2 [internal] load metadata for docker.io/library/elixir:1.19.5-otp-28
+#2 DONE 0.3s
 
- pushing layer sha256:e41369a1176ccf7e8da871c97e2e10878fc244db0576b186dd24d29372237a7a                                                                                       0.5s
- => => pushing layer sha256:7c7cc01d6ab60677efd9325ad21fe514ec69a745926c6075132e7d0ca004ab58                                                                                       0.2s
- => => pushing layer sha256:000b9a64d91a3881b0116e8e14c1c9ab05639d2ec8b2c9e6865036f85dd27d4b                                                                                       0.2s
- => => pushing layer sha256:61add2a191352ea7e6c3e46bfb0fe05b0809fd0ae1030b64d2692c09eb4c04a0                                                                                       0.4s
- => => pushing manifest for registry.fly.io/music-demo:deployment-01KVTVRET607Y2Z3YCS6WBEBT7@sha256:9f6cdb1b9e02a30f4e9634a935511fe0ce4d237ee601726e0f4fd603d8a6740a               0.1s
---> Build Summary:  (​)
---> Building image done
-image: registry.fly.io/music-demo:deployment-01KVTVRET607Y2Z3YCS6WBEBT7
-image size: 150 MB
+#3 [internal] load metadata for docker.io/library/elixir:1.19.5-otp-28-slim
+#3 DONE 0.3s
 
-Watch your deployment at https://fly.io/apps/music-demo/monitoring
+#4 [internal] load .dockerignore
+#4 transferring context: 109B 0.2s
+#4 transferring context: 109B 0.2s done
+#4 DONE 0.2s
 
-Running music-demo release_command: /app/bin/music_learning_platform eval "MusicLearningPlatform.Release.migrate"
-Starting machine
+#5 [builder  1/15] FROM docker.io/library/elixir:1.19.5-otp-28@sha256:ca474c2a5dac6a16d9c63b1f63b4c501fff5def09ac0192345c05d64152fc367
+#5 resolve docker.io/library/elixir:1.19.5-otp-28@sha256:ca474c2a5dac6a16d9c63b1f63b4c501fff5def09ac0192345c05d64152fc367 done
+#5 DONE 0.0s
 
--------
- ✔ release_command 7814050b4e2e68 completed successfully
--------
--------
-Updating existing machines in 'music-demo' with rolling strategy
+#6 [runtime 1/4] FROM docker.io/library/elixir:1.19.5-otp-28-slim@sha256:631cb67bcc90d666f2d3318404a08216fae453fd09c5ba484607d000a4c8ff1c
+#6 resolve docker.io/library/elixir:1.19.5-otp-28-slim@sha256:631cb67bcc90d666f2d3318404a08216fae453fd09c5ba484607d000a4c8ff1c done
+#6 DONE 0.0s
 
-WARNING The app is not listening on the expected address and will not be reachable by fly-proxy.
-You can fix this by configuring your app to listen on the following addresses:
-  - 0.0.0.0:8080 2865665a3e7278 is now in a good state
-Found these processes inside the machine with open listening sockets:
- PROCESS                             │ ADDRESSES                             
-─────────────────────────────────────┼───────────────────────────────────────
- /.fly/hallpass                      │ [fdaa:88:2210:a7b:428:aeec:82f4:2]:22 
- /app/erts-16.4.0.2/bin/epmd -daemon │ 0.0.0.0:4369, [::]:4369               
+#7 [internal] load build context
+#7 transferring context: 567.70kB 0.9s done
+#7 DONE 0.9s
 
+#8 [builder  3/15] RUN apt-get update -y &&     apt-get install -y --no-install-recommends build-essential git &&     rm -rf /var/lib/apt/lists/*
+#8 CACHED
 
--------
- ✔ [1/2] Cleared lease for d899202be5e718
- ✔ [2/2] Cleared lease for 2865665a3e7278
--------
-Checking DNS configuration for music-demo.fly.dev
-✓ DNS configuration verified
+#9 [builder  5/15] COPY mix.exs mix.lock ./
+#9 CACHED
 
-Visit your newly deployed app at https://music-demo.fly.dev/
+#10 [builder  2/15] WORKDIR /app
+#10 CACHED
 
+#11 [builder  4/15] RUN mix local.hex --force && mix local.rebar --force
+#11 CACHED
+
+#12 [builder  6/15] RUN mix deps.get
+#12 CACHED
+
+#13 [builder  7/15] COPY config config/
+#13 DONE 0.0s
+
+#14 [builder  8/15] COPY priv priv/
+#14 DONE 0.0s
+
+#15 [builder  9/15] COPY assets assets/
+#15 DONE 0.0s
+
+#16 [builder 10/15] COPY lib lib/
+#16 DONE 0.0s
+
+#17 [builder 11/15] COPY rel rel/
+#17 DONE 0.0s
+
+#18 [builder 12/15] RUN mix compile
+#18 0.902 ==> file_system
+#18 0.904 Compiling 7 files (.ex)
+#18 1.099 Generated file_system app
+#18 1.127 ==> mime
+#18 1.127 Compiling 1 file (.ex)
+#18 1.251 Generated mime app
+#18 1.274 ==> nimble_options
+#18 1.274 Compiling 3 files (.ex)
+#18 1.684 Generated nimble_options app
+#18 1.708 ==> plug_crypto
+#18 1.708 Compiling 5 files (.ex)
+#18 1.838 Generated plug_crypto app
+#18 1.862 ==> hpax
+#18 1.862 Compiling 4 files (.ex)
+#18 2.388 Generated hpax app
+#18 2.430 ==> mint
+#18 2.430 Compiling 1 file (.erl)
+#18 2.551 Compiling 19 files (.ex)
+#18 3.888 Generated mint app
+#18 3.914 ==> decimal
+#18 3.915 Compiling 4 files (.ex)
+#18 4.726 Generated decimal app
+#18 4.750 ==> jason
+#18 4.750 Compiling 10 files (.ex)
+#18 6.579 Generated jason app
+#18 6.599 ==> esbuild
+#18 6.599 Compiling 4 files (.ex)
+#18 6.711 Generated esbuild app
+#18 7.128 ==> music_learning_platform
+#18 7.128 ===> Analyzing applications...
+#18 7.857 ===> Compiling idna
+#18 35.59 ===> Analyzing applications...
+#18 35.65 ===> Compiling telemetry
+#18 36.02 ==> telemetry_metrics
+#18 36.02 Compiling 7 files (.ex)
+#18 36.16 Generated telemetry_metrics app
+#18 36.63 ==> music_learning_platform
+#18 36.63 ===> Analyzing applications...
+#18 36.68 ===> Compiling telemetry_poller
+#18 36.96 ==> thousand_island
+#18 36.96 Compiling 18 files (.ex)
+#18 37.30 Generated thousand_island app
+#18 37.34 ==> db_connection
+#18 37.34 Compiling 18 files (.ex)
+#18 38.09 Generated db_connection app
+#18 38.14 ==> ecto
+#18 38.14 Compiling 56 files (.ex)
+#18 41.91 Generated ecto app
+#18 41.99 ==> phoenix_html
+#18 41.99 Compiling 6 files (.ex)
+#18 42.43 Generated phoenix_html app
+#18 42.45 ==> phoenix_template
+#18 42.45 Compiling 4 files (.ex)
+#18 42.58 Generated phoenix_template app
+#18 42.62 ==> expo
+#18 42.62 Compiling 2 files (.erl)
+#18 43.02 Compiling 22 files (.ex)
+#18 43.38 Generated expo app
+#18 43.42 ==> gettext
+#18 43.42 Compiling 18 files (.ex)
+#18 43.79 Generated gettext app
+#18 43.81 ==> phoenix_pubsub
+#18 43.81 Compiling 12 files (.ex)
+#18 44.24 Generated phoenix_pubsub app
+#18 44.28 ==> dns_cluster
+#18 44.28 Compiling 1 file (.ex)
+#18 44.36 Generated dns_cluster app
+#18 44.39 ==> plug
+#18 44.39 Compiling 1 file (.erl)
+#18 44.53 Compiling 42 files (.ex)
+#18 46.77 Generated plug app
+#18 46.84 ==> postgrex
+#18 46.84 Compiling 70 files (.ex)
+#18 52.88 Generated postgrex app
+#18 52.94 ==> phoenix_ecto
+#18 52.94 Compiling 7 files (.ex)
+#18 53.27 Generated phoenix_ecto app
+#18 53.33 ==> ecto_sql
+#18 53.33 Compiling 25 files (.ex)
+#18 54.54 Generated ecto_sql app
+#18 54.57 ==> nimble_pool
+#18 54.57 Compiling 2 files (.ex)
+#18 54.82 Generated nimble_pool app
+#18 54.85 ==> finch
+#18 54.85 Compiling 22 files (.ex)
+#18 55.73 Generated finch app
+#18 55.78 ==> req
+#18 55.78 Compiling 21 files (.ex)
+#18 56.93 Generated req app
+#18 56.95 ==> tailwind
+#18 56.95 Compiling 3 files (.ex)
+#18 57.10 Generated tailwind app
+#18 57.12 ==> websock
+#18 57.12 Compiling 1 file (.ex)
+#18 57.14 Generated websock app
+#18 57.17 ==> bandit
+#18 57.17 Compiling 54 files (.ex)
+#18 58.50 Generated bandit app
+#18 58.60 ==> swoosh
+#18 58.60 Compiling 60 files (.ex)
+#18 59.65 Generated swoosh app
+#18 59.73 ==> websock_adapter
+#18 59.74 Compiling 4 files (.ex)
+#18 59.81 Generated websock_adapter app
+#18 59.86 ==> phoenix
+#18 59.86 Compiling 74 files (.ex)
+#18 62.20 Generated phoenix app
+#18 62.26 ==> phoenix_live_reload
+#18 62.26 Compiling 5 files (.ex)
+#18 62.40 Generated phoenix_live_reload app
+#18 62.44 ==> phoenix_live_view
+#18 62.44 Compiling 49 files (.ex)
+#18 65.86 Generated phoenix_live_view app
+#18 65.94 ==> phoenix_live_dashboard
+#18 65.94 Compiling 36 files (.ex)
+#18 67.85 Generated phoenix_live_dashboard app
+#18 67.87 ==> sweet_xml
+#18 67.87 Compiling 2 files (.ex)
+#18 68.13      warning: a struct for SweetXpath is expected on struct update:
+#18 68.13 
+#18 68.13          %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)} | xpath.namespaces]}
+#18 68.13 
+#18 68.13      but got type:
+#18 68.13 
+#18 68.13          dynamic()
+#18 68.13 
+#18 68.13      where "xpath" was given the type:
+#18 68.13 
+#18 68.13          # type: dynamic()
+#18 68.13          # from: lib/sweet_xml.ex:245:21
+#18 68.13          xpath
+#18 68.13 
+#18 68.13      when defining the variable "xpath", you must also pattern match on "%SweetXpath{}".
+#18 68.13 
+#18 68.13      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+#18 68.13 
+#18 68.13          user = some_function()
+#18 68.13          %User{user | name: "John Doe"}
+#18 68.13 
+#18 68.13      it is enough to write:
+#18 68.13 
+#18 68.13          %User{} = user = some_function()
+#18 68.13          %{user | name: "John Doe"}
+#18 68.13 
+#18 68.13      typing violation found at:
+#18 68.13      │
+#18 68.13  246 │     %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)}
+#18 68.13      │     ~
+#18 68.13      │
+#18 68.13      └─ lib/sweet_xml.ex:246:5: SweetXml.add_namespace/3
+#18 68.13 
+#18 68.13 Generated sweet_xml app
+#18 68.19 ==> music_learning_platform
+#18 68.19 Compiling 44 files (.ex)
+#18 70.05 Generated music_learning_platform app
+#18 DONE 70.3s
+
+#19 [builder 13/15] RUN mix assets.setup
+#19 0.880 
+#19 0.880 19:21:24.507 [debug] Downloading tailwind from https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.12/tailwindcss-linux-x64
+#19 1.886 
+#19 1.886 19:21:25.517 [debug] Downloading esbuild from https://registry.npmjs.org/@esbuild/linux-x64/0.25.4
+#19 DONE 2.6s
+
+#20 [builder 14/15] RUN mix assets.deploy
+#20 1.396 ≈ tailwindcss v4.1.12
+#20 1.396 
+#20 1.524 /*! 🌼 daisyUI 5.0.35 */
+#20 1.639 Done in 242ms
+#20 1.684 ✘ [ERROR] Could not resolve "tone"
+#20 1.684 
+#20 1.684     js/app.js:26:22:
+#20 1.684       26 │ import * as Tone from "tone"
+#20 1.684          ╵                       ~~~~~~
+#20 1.684 
+#20 1.684   You can mark the path "tone" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+#20 1.684 
+#20 1.690 ✘ [ERROR] Could not resolve "tone"
+#20 1.690 
+#20 1.690     js/tone_player_hook.js:1:22:
+#20 1.690       1 │ import * as Tone from "tone"
+#20 1.690         ╵                       ~~~~~~
+#20 1.690 
+#20 1.690   You can mark the path "tone" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+#20 1.690 
+#20 1.690 ✘ [ERROR] Could not resolve "opensheetmusicdisplay"
+#20 1.690 
+#20 1.690     js/osmd_hook.js:1:38:
+#20 1.690       1 │ import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
+#20 1.690         ╵                                       ~~~~~~~~~~~~~~~~~~~~~~~
+#20 1.690 
+#20 1.690   You can mark the path "opensheetmusicdisplay" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+#20 1.690 
+#20 1.707 3 errors
+#20 1.722 ** (Mix) `mix esbuild music_learning_platform --minify` exited with 1
+#20 ERROR: process "/bin/sh -c mix assets.deploy" did not complete successfully: exit code: 1
+------
+ > [builder 14/15] RUN mix assets.deploy:
+Error:  [ERROR] Could not resolve "opensheetmusicdisplay"
+1.690 
+1.690     js/osmd_hook.js:1:38:
+1.690       1 │ import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
+1.690         ╵                                       ~~~~~~~~~~~~~~~~~~~~~~~
+1.690 
+1.690   You can mark the path "opensheetmusicdisplay" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+1.690 
+1.707 3 errors
+1.722 ** (Mix) `mix esbuild music_learning_platform --minify` exited with 1
+------
+==> Building image
+Waiting for depot builder...
+
+==> Building image with Depot
+--> build:  (​)
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.55kB 0.2s done
+#1 DONE 0.2s
+
+#2 [internal] load metadata for docker.io/library/elixir:1.19.5-otp-28
+#2 DONE 0.2s
+
+#3 [internal] load metadata for docker.io/library/elixir:1.19.5-otp-28-slim
+#3 DONE 0.2s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 109B 0.2s done
+#4 DONE 0.2s
+
+#5 [runtime 1/4] FROM docker.io/library/elixir:1.19.5-otp-28-slim@sha256:631cb67bcc90d666f2d3318404a08216fae453fd09c5ba484607d000a4c8ff1c
+#5 resolve docker.io/library/elixir:1.19.5-otp-28-slim@sha256:631cb67bcc90d666f2d3318404a08216fae453fd09c5ba484607d000a4c8ff1c done
+#5 DONE 0.0s
+
+#6 [builder  1/15] FROM docker.io/library/elixir:1.19.5-otp-28@sha256:ca474c2a5dac6a16d9c63b1f63b4c501fff5def09ac0192345c05d64152fc367
+#6 resolve docker.io/library/elixir:1.19.5-otp-28@sha256:ca474c2a5dac6a16d9c63b1f63b4c501fff5def09ac0192345c05d64152fc367 done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 7.30kB 0.2s done
+#7 DONE 0.2s
+
+#8 [builder  4/15] RUN mix local.hex --force && mix local.rebar --force
+#8 CACHED
+
+#9 [builder  2/15] WORKDIR /app
+#9 CACHED
+
+#10 [builder 10/15] COPY lib lib/
+#10 CACHED
+
+#11 [builder  9/15] COPY assets assets/
+#11 CACHED
+
+#12 [builder  7/15] COPY config config/
+#12 CACHED
+
+#13 [builder  5/15] COPY mix.exs mix.lock ./
+#13 CACHED
+
+#14 [builder  6/15] RUN mix deps.get
+#14 CACHED
+
+#15 [builder  8/15] COPY priv priv/
+#15 CACHED
+
+#16 [builder 11/15] COPY rel rel/
+#16 CACHED
+
+#17 [builder 12/15] RUN mix compile
+#17 CACHED
+
+#18 [builder  3/15] RUN apt-get update -y &&     apt-get install -y --no-install-recommends build-essential git &&     rm -rf /var/lib/apt/lists/*
+#18 CACHED
+
+#19 [builder 13/15] RUN mix assets.setup
+#19 CACHED
+
+#20 [builder 14/15] RUN mix assets.deploy
+#20 1.500 ≈ tailwindcss v4.1.12
+#20 1.500 
+#20 1.624 /*! 🌼 daisyUI 5.0.35 */
+#20 1.742 Done in 241ms
+#20 1.787 ✘ [ERROR] Could not resolve "tone"
+#20 1.787 
+#20 1.787     js/app.js:26:22:
+#20 1.787       26 │ import * as Tone from "tone"
+#20 1.787          ╵                       ~~~~~~
+#20 1.787 
+#20 1.787   You can mark the path "tone" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+#20 1.787 
+#20 1.791 ✘ [ERROR] Could not resolve "tone"
+#20 1.791 
+#20 1.791     js/tone_player_hook.js:1:22:
+#20 1.791       1 │ import * as Tone from "tone"
+#20 1.791         ╵                       ~~~~~~
+#20 1.791 
+#20 1.791   You can mark the path "tone" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+#20 1.791 
+#20 1.791 ✘ [ERROR] Could not resolve "opensheetmusicdisplay"
+#20 1.791 
+#20 1.791     js/osmd_hook.js:1:38:
+#20 1.791       1 │ import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
+#20 1.791         ╵                                       ~~~~~~~~~~~~~~~~~~~~~~~
+#20 1.791 
+#20 1.791   You can mark the path "opensheetmusicdisplay" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+#20 1.791 
+#20 1.807 3 errors
+#20 1.820 ** (Mix) `mix esbuild music_learning_platform --minify` exited with 1
+#20 ERROR: process "/bin/sh -c mix assets.deploy" did not complete successfully: exit code: 1
+------
+ > [builder 14/15] RUN mix assets.deploy:
+Error:  [ERROR] Could not resolve "opensheetmusicdisplay"
+1.791 
+1.791     js/osmd_hook.js:1:38:
+1.791       1 │ import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
+1.791         ╵                                       ~~~~~~~~~~~~~~~~~~~~~~~
+1.791 
+1.791   You can mark the path "opensheetmusicdisplay" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+1.791 
+1.807 3 errors
+1.820 ** (Mix) `mix esbuild music_learning_platform --minify` exited with 1
+------
+Error: failed to fetch an image or build from source: error building: failed to solve: process "/bin/sh -c mix assets.deploy" did not complete successfully: exit code: 1
+Error: Process completed with exit code 1.
