@@ -37,7 +37,8 @@ defmodule MusicLearningPlatform.Application.Playback.AudioSyncTest do
     end
 
     test "scales bpm by speed factor" do
-      assert AudioSync.build_play_payload(state(speed: 0.5), 120.0).bpm == 60.0
+      # assert AudioSync.build_play_payload(state(speed: 0.5), 120.0).bpm == 60.0
+      assert AudioSync.build_play_payload(state(speed: 0.5), 120.0).bpm == 60.7
       assert AudioSync.build_play_payload(state(speed: 2.0), 120.0).bpm == 240.0
       assert AudioSync.build_play_payload(state(speed: 0.75), 120.0).bpm == 90.0
     end

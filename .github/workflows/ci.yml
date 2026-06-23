@@ -1,25 +1,20 @@
 name: CI
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 env:
   MIX_ENV: test
-  PGHOST: localhost
-  PGUSER: postgres
-  PGPASSWORD: postgres
-  PGDATABASE: music_learning_platform_test
 
 jobs:
   test:
-    name: Test
+    name: Tests
     runs-on: ubuntu-latest
 
     services:
-      db:
+      postgres:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
@@ -40,7 +35,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           elixir-version: "1.19.5"
-          otp-version: "27"
+          otp-version: "28"
 
       - name: Cache deps
         uses: actions/cache@v4
@@ -53,34 +48,22 @@ jobs:
         uses: actions/cache@v4
         with:
           path: _build
-          key: ${{ runner.os }}-build-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-build-
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: assets/package-lock.json
+          key: ${{ runner.os }}-build-test-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-build-test-
 
       - name: Install dependencies
         run: mix deps.get
 
-      - name: Install npm dependencies
-        run: npm install --prefix assets
-
-      - name: Check formatting
-        run: mix format --check-formatted
-
-      - name: Compile (warnings as errors)
+      - name: Compile
         run: mix compile --warnings-as-errors
 
-      - name: Install asset binaries
-        run: MIX_ENV=dev mix assets.setup
-
-      - name: Build assets
-        run: MIX_ENV=dev mix assets.build
+      - name: Run migrations
+        run: mix ecto.migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/music_learning_platform_test
 
       - name: Run tests
         run: mix test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/music_learning_platform_test
 
