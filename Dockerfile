@@ -19,12 +19,16 @@ COPY priv priv/
 COPY assets assets/
 COPY lib lib/
 
-# Download esbuild + tailwind binaries and compile assets
+# Compile first — generates the phoenix-colocated/music_learning_platform
+# JS module that esbuild needs to resolve the import in app.js
+RUN mix compile
+
+# Download esbuild + tailwind binaries and build assets
 RUN mix assets.setup
 RUN mix assets.deploy
 
 # Build production release (priv/static/ already has digested assets)
-RUN MIX_ENV=prod mix do compile, release
+RUN MIX_ENV=prod mix do compile + release
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM debian:bookworm-slim AS runtime
