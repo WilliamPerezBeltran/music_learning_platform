@@ -269,7 +269,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
 
           <%!-- Section label + close --%>
           <div class="flex items-center justify-between px-5 pt-5 pb-3">
-            <p class="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/50">
+            <p class="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/75">
               Canciones
             </p>
             <button
@@ -318,7 +318,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
 
           <%!-- Color rainbow bar --%>
           <div class="px-5 py-4" style="border-top:1px solid rgba(255,255,255,0.06);">
-            <p class="text-[9px] uppercase tracking-widest text-white/40 mb-2.5">
+            <p class="text-[9px] uppercase tracking-widest text-white/65 mb-2.5">
               Sistema de colores
             </p>
             <div class="flex gap-1.5">
@@ -353,7 +353,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
                   {@selected_song.title}
                 </h1>
                 <%= if @score_loaded do %>
-                  <span class="text-xs text-white/50 whitespace-nowrap hidden sm:block">
+                  <span class="text-xs text-white/75 whitespace-nowrap hidden sm:block">
                     · {@total_notes} notas
                   </span>
                 <% end %>
@@ -454,7 +454,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
             <%!-- Song grid — always visible when there are songs --%>
             <%= if @songs != [] do %>
               <div class="mb-6">
-                <p class="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/50 mb-4">
+                <p class="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/75 mb-4">
                   Canciones disponibles
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -487,7 +487,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
                           <p class="text-white/60 text-xs mt-0.5">{song.artist}</p>
                         <% end %>
                         <%= if song.category do %>
-                          <p class="text-white/40 text-[10px] mt-1 uppercase tracking-wider">
+                          <p class="text-white/65 text-[10px] mt-1 uppercase tracking-wider">
                             {song.category}
                           </p>
                         <% end %>
@@ -507,7 +507,7 @@ defmodule MusicLearningPlatformWeb.SongLive.Show do
             <%!-- Score --%>
             <%= if @selected_song do %>
               <div>
-                <p class="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/50 mb-4">
+                <p class="text-[10px] uppercase tracking-[0.18em] font-semibold text-white/75 mb-4">
                   Partitura
                 </p>
                 <div
